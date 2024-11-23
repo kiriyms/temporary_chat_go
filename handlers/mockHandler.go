@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -18,34 +17,29 @@ func (mh *MockHandler) HandleGetMainPage(c echo.Context) error {
 }
 
 func (mh *MockHandler) HandleGetRoomsPage(c echo.Context) error {
-	userIdString := c.Param("id")
-	userId, err := strconv.Atoi(userIdString)
-	if err != nil {
-		return err
-	}
-	return c.String(http.StatusOK, "Getting rooms for user: "+strconv.Itoa(userId))
+	return c.String(http.StatusOK, "Rooms Page!")
 }
 
 func (mh *MockHandler) HandlePostProfile(c echo.Context) error {
-	return nil
+	return c.String(http.StatusOK, "Profle Posted!")
 }
 
 func (mh *MockHandler) HandlePutProfile(c echo.Context) error {
-	return nil
+	return c.String(http.StatusOK, "Profile Updated!!")
 }
 
 func (mh *MockHandler) HandlePostRoom(c echo.Context) error {
-	return nil
+	return c.String(http.StatusOK, "Room Created!")
 }
 
 func (mh *MockHandler) HandlePostChatMessage(c echo.Context) error {
-	return nil
+	return c.String(http.StatusOK, "Message Posted!")
 }
 
 func (mh *MockHandler) HandleGetWebSocketConn(c echo.Context) error {
-	return nil
+	return c.String(http.StatusOK, "Websocket Established!")
 }
 
 func (mh *MockHandler) HandleGetRoomChat(c echo.Context) error {
-	return nil
+	return c.String(http.StatusOK, "Room Chat!")
 }
