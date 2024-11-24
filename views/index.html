@@ -5,21 +5,42 @@
     <meta charset='utf-8'>
     <title>TempoChat</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel='stylesheet' type='text/css' media='screen' href='/styles/index.css'>
+    <link id="head_style-link" rel='stylesheet' type='text/css' media='screen' href='/static/styles/index.css'>
     <script src="https://unpkg.com/htmx.org@2.0.3"></script>
 </head>
 
 <body>
-    {{ template "spinner" . }}
-    <!-- {{ if .TestData }}
-        {{ template "testing" .TestData }}
-    {{ end }} -->
+    <div class="main-wrapper">
+        {{ template "main-spinner" . }}
+    </div>
 </body>
 </html>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(event) {
+        const styleLink = document.getElementById("head_style-link")
+        styleLink.href = '/static/styles/index.css?v=' + Date.now()
+    });
+</script>
+{{ end }}
+
+{{ block "main-spinner" . }}
+    <div class="main-spinner">
+        {{ template "spinner" .}}
+    </div>
 {{ end }}
 
 {{ block "spinner" . }}
-    <div class="spinner" hx-trigger="load" hx-get="/rooms">Loading...</div>
+    <div id="spinner" class="spinner"></div>
+    <!-- <div class="main-spinner" hx-trigger="load" hx-get="/rooms/123">
+    </div> -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function(event) {
+            const spinner = document.getElementById('spinner')
+            const width = spinner.offsetWidth / 12 | 0
+            spinner.style.borderWidth = width + "px"
+        });
+    </script>
 {{ end }}
 
 {{ block "testing" . }}
