@@ -1,13 +1,29 @@
+{{ block "index" . }}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Tempo</title>
+    <title>TempoChat</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
+    <link rel='stylesheet' type='text/css' media='screen' href='/styles/index.css'>
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
 </head>
 
 <body>
-    <div>Hello World!!!</div>
+    {{ template "spinner" . }}
+    <!-- {{ if .TestData }}
+        {{ template "testing" .TestData }}
+    {{ end }} -->
 </body>
 </html>
+{{ end }}
+
+{{ block "spinner" . }}
+    <div class="spinner" hx-trigger="load" hx-get="/rooms">Loading...</div>
+{{ end }}
+
+{{ block "testing" . }}
+    <div>
+        {{ .TestValue }}
+    </div>
+{{ end }}

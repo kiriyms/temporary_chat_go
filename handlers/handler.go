@@ -11,4 +11,5 @@ type handler interface {
 	HandleGetRoomChat(c echo.Context) error
 	HandlePostChatMessage(c echo.Context) error
 	HandleGetWebSocketConn(c echo.Context) error
+	HandlePostToken(c echo.Context) error
 }

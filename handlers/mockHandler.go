@@ -43,3 +43,7 @@ func (mh *MockHandler) HandleGetWebSocketConn(c echo.Context) error {
 func (mh *MockHandler) HandleGetRoomChat(c echo.Context) error {
 	return c.String(http.StatusOK, "Room Chat!")
 }
+
+func (mh *MockHandler) HandlePostToken(c echo.Context) error {
+	return c.String(http.StatusOK, "Post Token!")
+}
