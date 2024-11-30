@@ -11,13 +11,15 @@ func main() {
 	e := echo.New()
 	e.Renderer = utils.NewTemplates()
 	e.Use(middleware.Logger())
-	e.Static("/styles", "styles")
+	e.Static("/static", "static")
 
 	h := handlers.NewProductionHandler()
 
 	e.GET("/", h.HandleGetMainPage)
 	e.POST("/", h.HandlePostProfile)
 	e.PUT("/", h.HandlePutProfile)
+
+	e.POST("/token", h.HandlePostToken)
 
 	e.GET("/rooms", h.HandleGetRoomsPage)
 	e.POST("/rooms", h.HandlePostRoom)
