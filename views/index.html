@@ -1,12 +1,4 @@
 {{ block "index" . }}
-    <!-- possible way to force index.css to be refreshed every time -->
-    <!-- <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const styleLink = document.getElementById("head_style-link")
-            styleLink.href = '/static/styles/index.css?v=' + Date.now()
-        })
-    </script> -->
-
     <!DOCTYPE html>
     <html>
     <head>
@@ -14,139 +6,24 @@
         <title>TEMPOCHAT_</title>
         <meta name='viewport' content='width=device-width, initial-scale=1'>
         <link id="head_style-link" rel='stylesheet' type='text/css' media='screen' href='/static/styles/index.css'>
+        <link id="head_style-link" rel='stylesheet' type='text/css' media='screen' href='/static/styles/init.css'>
+        <link id="head_style-link" rel='stylesheet' type='text/css' media='screen' href='/static/styles/login.css'>
+        <link id="head_style-link" rel='stylesheet' type='text/css' media='screen' href='/static/styles/rooms.css'>
+        <link id="head_style-link" rel='stylesheet' type='text/css' media='screen' href='/static/styles/components/spinner.css'>
+        <link id="head_style-link" rel='stylesheet' type='text/css' media='screen' href='/static/styles/components/login-form.css'>
         <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
         <script src="https://unpkg.com/htmx.org@2.0.3"></script>
         <script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
     </head>
 
     <body>
-        <div class="main-wrapper">
-            {{ template "main-spinner" . }}
+        <div class="main-wrapper" id="main">
+            {{ if .Rooms }}
+                {{ template "rooms" . }}
+            {{ else }}
+                {{ template "login" . }}
+            {{ end }}
         </div>
     </body>
     </html>
-{{ end }}
-
-{{ block "login" . }}
-    <div class="login-wrapper" id="login-wrapper">
-        <div class="login_title">
-            TEMPOCHAT_
-        </div>
-        <form class="login_card">
-            <div class="login_card_avatar" id="login_card_avatar">
-                <div class="login_card_avatar-delete" id="login_card_avatar-delete">
-                    <img
-                        src="/static/images/trash_light.svg"
-                        alt="delete-avatar"
-                        class="login_card_avatar-delete_icon"
-                    >
-                </div>
-                <img 
-                    src="/static/images/avatar_placeholder.png" 
-                    alt="avatar" 
-                    class="login_card_avatar-image" 
-                    id="avatar-image"
-                >
-            </div>
-            <label for="avatar-input" class="login_card_upload">
-                <div class="login_card_upload_icon"></div>
-                <div class="login_card_upload_text">
-                    UPLOAD
-                </div>
-            </label>
-            <input 
-                type="file" 
-                name="avatar-input"
-                id="avatar-input" 
-                accept="image/gif, image/jpeg, image/png" 
-                onchange="readURL(this)" 
-                hidden
-            >
-            <div class="login_card_empty"></div>
-            <input class="login_card_input" name="name-input" placeholder="Enter your name...">
-            <div class="login_card_submit">
-                <button 
-                    class="login_card_submit_button" 
-                    type="submit"
-                    hx-post="/"
-                    hx-target="#login-wrapper"
-                    hx-encoding="multipart/form-data"
-                    hx-swap="outerHTML"
-                >
-                    SUBMIT
-                </button>
-            </div>
-        </form>
-    </div>
-    <script>
-        window.addEventListener("load", function() {
-            try{
-                const avatar = htmx.find('#login_card_avatar')
-                const avatarDelete = htmx.find('#login_card_avatar-delete')
-                avatar.addEventListener("mouseover", function() {
-                    avatarDelete.classList.add("visible")
-                })
-                avatar.addEventListener("mouseout", function() {
-                    avatarDelete.classList.remove("visible")
-                })
-                avatar.addEventListener("click", function() {
-                    const image = htmx.find('#avatar-image')
-                    const avatarInput = htmx.find('#avatar-input')
-                    image.src = '/static/images/avatar_placeholder.png'
-                    avatarInput.value = ""
-                })
-            }catch{}
-        })
-
-        function readURL(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-        
-                reader.onload = function (e) {
-                    const image = htmx.find('#avatar-image')
-                    image.src = e.target.result
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-    </script>
-{{ end }}
-
-{{ block "rooms" . }}
-    <div>Rooms!</div>
-{{ end }}
-
-{{ block "main-spinner" . }}
-    <div id="main-spinner" class="main-spinner"
-        hx-post="/token"
-        hx-trigger="load"
-        hx-swap="outerHTML"
-        hx-vals='js:{token: token}'
-        hx-ext="json-enc"
-    >
-        {{ template "spinner" .}}
-    </div>
-    <script>
-        const token = localStorage.getItem('token')
-    </script>
-{{ end }}
-
-{{ block "spinner" . }}
-    <div id="spinner" class="spinner"></div>
-    <script>
-        window.addEventListener("load", function() {
-            try{
-                const spinner = htmx.find('#spinner')
-                const spinnerParent = spinner.parentElement
-                const newWidth = spinnerParent.offsetWidth / 12 | 0
-                spinner.style.borderWidth = newWidth + "px"
-            }catch{}
-        })
-    </script>
-{{ end }}
-
-{{ block "testing" . }}
-    <div>
-        {{ .TestValue }}
-    </div>
 {{ end }}

@@ -1,0 +1,15 @@
+{{ block "init-page" . }}
+<!-- ADD TOKEN AS HEADER -->
+    <div id="init" class="init"
+        hx-post="/token"
+        hx-trigger="load"
+        hx-swap="outerHTML"
+        hx-vals='js:{token: token}'
+        hx-ext="json-enc"
+    >
+        {{ template "spinner" .}}
+    </div>
+    <script>
+        const token = localStorage.getItem('token')
+    </script>
+{{ end }}

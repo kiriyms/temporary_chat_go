@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -12,38 +14,29 @@ func NewMockHandler() handler {
 	return &MockHandler{}
 }
 
-func (mh *MockHandler) HandleGetMainPage(c echo.Context) error {
+func (mh *MockHandler) HandleGetMain(c echo.Context) error {
+	time.Sleep(2 * time.Second)
+	fmt.Println(c.Request().Cookies())
+	fmt.Println(c.Cookie("sessionId"))
+
+	cookie := http.Cookie{
+		Name:     "exampleCookie",
+		Value:    "testing!",
+		Path:     "/",
+		MaxAge:   3600,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(c.Response(), &cookie)
+
 	return c.String(http.StatusOK, "Main Page!")
 }
 
-func (mh *MockHandler) HandleGetRoomsPage(c echo.Context) error {
+func (mh *MockHandler) HandleGetRooms(c echo.Context) error {
 	return c.String(http.StatusOK, "Rooms Page!")
 }
 
 func (mh *MockHandler) HandlePostProfile(c echo.Context) error {
 	return c.String(http.StatusOK, "Profle Posted!")
-}
-
-func (mh *MockHandler) HandlePutProfile(c echo.Context) error {
-	return c.String(http.StatusOK, "Profile Updated!!")
-}
-
-func (mh *MockHandler) HandlePostRoom(c echo.Context) error {
-	return c.String(http.StatusOK, "Room Created!")
-}
-
-func (mh *MockHandler) HandlePostChatMessage(c echo.Context) error {
-	return c.String(http.StatusOK, "Message Posted!")
-}
-
-func (mh *MockHandler) HandleGetWebSocketConn(c echo.Context) error {
-	return c.String(http.StatusOK, "Websocket Established!")
-}
-
-func (mh *MockHandler) HandleGetRoomChat(c echo.Context) error {
-	return c.String(http.StatusOK, "Room Chat!")
-}
-
-func (mh *MockHandler) HandlePostToken(c echo.Context) error {
-	return c.String(http.StatusOK, "Post Token!")
 }

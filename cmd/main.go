@@ -15,18 +15,9 @@ func main() {
 
 	h := handlers.NewProductionHandler()
 
-	e.GET("/", h.HandleGetMainPage)
+	e.GET("/", h.HandleGetMain)
 	e.POST("/", h.HandlePostProfile)
-	e.PUT("/", h.HandlePutProfile)
-
-	e.POST("/token", h.HandlePostToken)
-
-	e.GET("/rooms", h.HandleGetRoomsPage)
-	e.POST("/rooms", h.HandlePostRoom)
-
-	e.GET("/rooms/:roomId", h.HandleGetRoomChat)
-	e.POST("/rooms/:roomId", h.HandlePostChatMessage)
-	e.GET("/rooms/:roomId/ws", h.HandleGetWebSocketConn)
+	e.GET("/rooms", h.HandleGetRooms)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }
