@@ -15,22 +15,20 @@ func NewProductionHandler() handler {
 }
 
 func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
-	// make proper Data struct somewhere
+	// make proper Data struct in models directory
 	Data := struct {
 		Rooms bool
 	}{false}
 
 	sessionId, err := c.Cookie("sessionId")
 	if err != nil {
-		// no cookie
 		return c.Render(http.StatusOK, "index", Data)
 	}
 
 	// validate cookie sessionID, return Data with error (e.g. session expired)
-	fmt.Println(sessionId.Value)
-
-	// if valid:
-	// Data.Rooms = true
+	if utils.ValidateSessionId(sessionId.Value) {
+		Data.Rooms = true
+	}
 
 	return c.Render(http.StatusOK, "index", Data)
 }
