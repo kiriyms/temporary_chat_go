@@ -1,17 +1,7 @@
-{{ block "spinner" . }}
-    <div id="spinner" class="spinner"></div>
-    <script>
-        window.addEventListener("load", function() {
-            try{
-                const spinner = htmx.find('#spinner')
-                const spinnerParent = spinner.parentElement
-                const newWidth = spinnerParent.offsetWidth / 12 | 0
-                spinner.style.borderWidth = newWidth + "px"
-            }catch{}
-        })
-    </script>
+{{ block "spinner-light" . }}
+    <img class="spinner-svg" src="/static/images/spinner_light.svg" alt="spinner">
 {{ end }}
 
-{{ block "spinner-svg" . }}
-    <img class="spinner-svg" src="/static/images/spinner_light.svg" alt="spinner">
+{{ block "spinner-dark" . }}
+    <img class="spinner-svg" src="/static/images/spinner_dark.svg" alt="spinner">
 {{ end }}

@@ -1,0 +1,79 @@
+{{ block "login-form" . }}
+    <form class="login-form-card">
+        <div class="login-form-card-avatar" id="login-card-avatar">
+            <div class="login-form-card-avatar-delete" id="login-card-avatar-delete">
+                <img
+                    src="/static/images/trash_light.svg"
+                    alt="delete-avatar"
+                    class="login-form-card-avatar-delete-icon"
+                >
+            </div>
+            <img 
+                src="/static/images/avatar_placeholder.png" 
+                alt="avatar" 
+                class="login-form-card-avatar-image" 
+                id="avatar-image"
+            >
+        </div>
+        <label for="avatar-input" class="login-form-card-upload">
+            <div class="login-form-card-upload-icon"></div>
+            <div class="login-form-card-upload-text">
+                UPLOAD
+            </div>
+        </label>
+        <input 
+            type="file" 
+            name="avatar-input"
+            id="avatar-input" 
+            accept="image/gif, image/jpeg, image/png" 
+            onchange="readURL(this)" 
+            hidden
+        >
+        <div class="login-form-card-empty"></div>
+        <input class="login-form-card-input" name="name-input" placeholder="Enter your name...">
+        <div class="login-form-card-submit">
+            <button 
+                class="login-form-card-submit-button" 
+                type="submit"
+                hx-post="/"
+                hx-target="#login-wrapper"
+                hx-encoding="multipart/form-data"
+                hx-swap="outerHTML"
+            >
+                SUBMIT
+            </button>
+        </div>
+    </form>
+    <script>
+        window.addEventListener("load", function() {
+            try{
+                const avatar = htmx.find('#login-card-avatar')
+                const avatarDelete = htmx.find('#login-card-avatar-delete')
+                avatar.addEventListener("mouseover", function() {
+                    avatarDelete.classList.add("visible")
+                })
+                avatar.addEventListener("mouseout", function() {
+                    avatarDelete.classList.remove("visible")
+                })
+                avatar.addEventListener("click", function() {
+                    const image = htmx.find('#avatar-image')
+                    const avatarInput = htmx.find('#avatar-input')
+                    image.src = '/static/images/avatar_placeholder.png'
+                    avatarInput.value = ""
+                })
+            }catch{}
+        })
+
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+        
+                reader.onload = function (e) {
+                    const image = htmx.find('#avatar-image')
+                    image.src = e.target.result
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+{{ end }}
