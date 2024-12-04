@@ -4,31 +4,49 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Kirill-Sirotkin/temporary_chat_go/models"
 	"github.com/Kirill-Sirotkin/temporary_chat_go/utils"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
-type ProductionHandler struct{}
+type ProductionHandler struct {
+	UserList *models.UserList
+}
 
-func NewProductionHandler() handler {
-	return &ProductionHandler{}
+func NewProductionHandler(ul *models.UserList) handler {
+	return &ProductionHandler{
+		UserList: ul,
+	}
 }
 
 func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
 	// make proper Data struct in models directory
-	Data := struct {
-		Rooms bool
-	}{false}
+	Data := models.NewIndexData()
 
-	sessionId, err := c.Cookie("sessionId")
+	jwtCookie, err := c.Cookie("jwt")
 	if err != nil {
+		fmt.Println(err)
 		return c.Render(http.StatusOK, "index", Data)
 	}
 
-	// validate cookie sessionID, return Data with error (e.g. session expired)
-	if utils.ValidateSessionId(sessionId.Value) {
-		Data.Rooms = true
+	userIdStr, err := utils.ValidateJWT(jwtCookie.Value)
+	if err != nil {
+		// jwt error (expired, etc.)
+		fmt.Println(err)
+		return c.Render(http.StatusOK, "index", Data)
 	}
+
+	userUUID, err := uuid.Parse(userIdStr)
+	if err != nil {
+		// uuid format is wrong
+		fmt.Println(err)
+		return c.Render(http.StatusOK, "index", Data)
+	}
+
+	Data.Rooms = true
+	user := ph.UserList.GetUserById(userUUID)
+	Data.UserData = user
 
 	return c.Render(http.StatusOK, "index", Data)
 }
@@ -51,5 +69,28 @@ func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 	}
 	fmt.Println(fileName)
 
-	return c.Render(http.StatusOK, "spinner-svg", nil)
+	user := models.NewUser(userName, fileName)
+	ph.UserList.AddUser(user)
+
+	newUser := ph.UserList.GetUserById(user.Id)
+	if newUser == nil {
+		// handle error: no user in memory list
+		fmt.Println("User was not found!!!")
+		return c.String(http.StatusInternalServerError, "User was not found!")
+	}
+
+	token, err := utils.CreateJWT(newUser.Id)
+	if err != nil {
+		fmt.Println("Could not create JWT!!!")
+		return c.String(http.StatusInternalServerError, "Could not create JWT!")
+	}
+
+	jwtCookie := new(http.Cookie)
+	jwtCookie.Name = "jwt"
+	jwtCookie.Value = token
+	c.SetCookie(jwtCookie)
+
+	return c.Render(http.StatusOK, "rooms", newUser)
 }
+
+// On POST /room renew jwt and add +10 mins to Expiration

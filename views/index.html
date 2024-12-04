@@ -18,7 +18,7 @@
     <body>
         <div class="main-wrapper" id="main">
             {{ if .Rooms }}
-                {{ template "rooms" . }}
+                {{ template "rooms" .UserData }}
             {{ else }}
                 {{ template "login" . }}
             {{ end }}
