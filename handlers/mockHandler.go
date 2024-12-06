@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Kirill-Sirotkin/temporary_chat_go/models"
 	"github.com/labstack/echo/v4"
 )
 
@@ -15,6 +16,8 @@ func NewMockHandler() handler {
 }
 
 func (mh *MockHandler) HandleGetMain(c echo.Context) error {
+	Data := models.NewIndexData()
+
 	time.Sleep(2 * time.Second)
 	fmt.Println(c.Request().Cookies())
 	fmt.Println(c.Cookie("sessionId"))
@@ -30,13 +33,14 @@ func (mh *MockHandler) HandleGetMain(c echo.Context) error {
 	}
 	http.SetCookie(c.Response(), &cookie)
 
-	return c.String(http.StatusOK, "Main Page!")
-}
-
-func (mh *MockHandler) HandleGetRooms(c echo.Context) error {
-	return c.String(http.StatusOK, "Rooms Page!")
+	return c.Render(http.StatusOK, "index", Data)
 }
 
 func (mh *MockHandler) HandlePostProfile(c echo.Context) error {
-	return c.String(http.StatusOK, "Profle Posted!")
+	time.Sleep(2 * time.Second)
+	return c.Render(http.StatusOK, "rooms", models.NewUser("anonymous", "/static/images/avatar_placeholder.png"))
+}
+
+func (mh *MockHandler) HandlePostRoom(c echo.Context) error {
+	return nil
 }

@@ -22,9 +22,17 @@ func UploadFile(file *multipart.FileHeader) (string, error) {
 		return "", errors.New("file size exceeds 2MB")
 	}
 
+	baseDir := "uploads"
 	fileName := strings.TrimSuffix(file.Filename, filepath.Ext(file.Filename))
 	id := uuid.New()
-	fileSaveDir := filepath.Join("uploads", fileName+id.String()+filepath.Ext(file.Filename))
+	fileSaveDir := filepath.Join(baseDir, fileName+id.String()+filepath.Ext(file.Filename))
+
+	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
+		err := os.Mkdir(baseDir, os.ModePerm)
+		if err != nil {
+			return "", err
+		}
+	}
 
 	dst, err := os.Create(fileSaveDir)
 	if err != nil {

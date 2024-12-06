@@ -1,3 +1,11 @@
 {{ block "rooms" . }}
-    <div class="userId">User ID: {{ .Id }}<br>User Name: {{ .Name }}<br>User Avatar: {{ .AvatarPath }}</div>
+    <div>
+        <div class="userId">User: {{ .UserData.Id }}</div>
+        <br>
+        <div id="room-list">
+            {{ template "room-list" . }}
+        </div>
+        <br>
+        {{ template "chat-window" . }}
+    </div>
 {{ end }}

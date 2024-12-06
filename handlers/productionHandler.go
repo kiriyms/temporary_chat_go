@@ -6,53 +6,41 @@ import (
 
 	"github.com/Kirill-Sirotkin/temporary_chat_go/models"
 	"github.com/Kirill-Sirotkin/temporary_chat_go/utils"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 type ProductionHandler struct {
 	UserList *models.UserList
+	RoomList *models.RoomList
 }
 
-func NewProductionHandler(ul *models.UserList) handler {
+func NewProductionHandler(ul *models.UserList, rl *models.RoomList) handler {
 	return &ProductionHandler{
 		UserList: ul,
+		RoomList: rl,
 	}
 }
 
 func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
-	// make proper Data struct in models directory
-	Data := models.NewIndexData()
+	data := models.NewIndexData()
 
-	jwtCookie, err := c.Cookie("jwt")
+	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
-		fmt.Println(err)
-		return c.Render(http.StatusOK, "index", Data)
+		return c.Render(http.StatusOK, "index", data)
 	}
 
-	userIdStr, err := utils.ValidateJWT(jwtCookie.Value)
-	if err != nil {
-		// jwt error (expired, etc.)
-		fmt.Println(err)
-		return c.Render(http.StatusOK, "index", Data)
-	}
-
-	userUUID, err := uuid.Parse(userIdStr)
-	if err != nil {
-		// uuid format is wrong
-		fmt.Println(err)
-		return c.Render(http.StatusOK, "index", Data)
-	}
-
-	Data.Rooms = true
 	user := ph.UserList.GetUserById(userUUID)
-	Data.UserData = user
+	if user == nil {
+		// error: user not found although token is valid
+		fmt.Println("user not found although token is valid")
+		return c.Render(http.StatusOK, "index", data)
+	}
 
-	return c.Render(http.StatusOK, "index", Data)
-}
+	data.Rooms = true
+	data.UserData = user
+	data.UserRooms = ph.RoomList.GetUserRooms(user.Id)
 
-func (ph *ProductionHandler) HandleGetRooms(c echo.Context) error {
-	return c.Render(http.StatusOK, "rooms", nil)
+	return c.Render(http.StatusOK, "index", data)
 }
 
 func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
@@ -90,7 +78,45 @@ func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 	jwtCookie.Value = token
 	c.SetCookie(jwtCookie)
 
-	return c.Render(http.StatusOK, "rooms", newUser)
+	data := models.NewIndexData()
+	data.Rooms = true
+	data.UserData = newUser
+	data.UserRooms = ph.RoomList.GetUserRooms(newUser.Id)
+
+	return c.Render(http.StatusOK, "rooms", data)
 }
 
-// On POST /room renew jwt and add +10 mins to Expiration
+func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
+	userUUID, err := utils.GetAndValidateCookieJWT(c)
+	if err != nil {
+		// POST in htmx template should do an oob swap into id="main"
+		// change http.Status to appropriate error
+		return c.Render(http.StatusUnauthorized, "login", nil)
+	}
+	fmt.Println(userUUID)
+
+	// besides the room list in-memory (possibly to be removed) needs to start a websocket(???)
+	// or goroutine with a 3-5 minute timer. by the end the room is deleted
+	// frontend html needs to have some js to show a timer and remove room element on-client
+	room := models.NewRoom(userUUID)
+	ph.RoomList.AddRoom(room)
+
+	token, err := utils.CreateJWT(userUUID)
+	if err != nil {
+		fmt.Println("Could not create JWT!!!")
+		return c.String(http.StatusInternalServerError, "Could not create JWT!")
+	}
+
+	jwtCookie := new(http.Cookie)
+	jwtCookie.Name = "jwt"
+	jwtCookie.Value = token
+	c.SetCookie(jwtCookie)
+
+	data := struct {
+		UserRooms []*models.Room
+	}{
+		ph.RoomList.GetUserRooms(userUUID),
+	}
+
+	return c.Render(http.StatusOK, "room-list", data)
+}

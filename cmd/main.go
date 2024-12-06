@@ -21,13 +21,16 @@ func main() {
 	e.Renderer = utils.NewTemplates()
 	e.Use(middleware.Logger())
 	e.Static("/static", "static")
+	e.Static("/uploads", "uploads")
 
 	userList := models.NewUserList()
-	h := handlers.NewProductionHandler(userList)
+	roomList := models.NewRoomList()
+	h := handlers.NewProductionHandler(userList, roomList)
+	// h := handlers.NewMockHandler()
 
 	e.GET("/", h.HandleGetMain)
 	e.POST("/", h.HandlePostProfile)
-	e.GET("/rooms", h.HandleGetRooms)
+	e.POST("/room", h.HandlePostRoom)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }

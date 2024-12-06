@@ -25,18 +25,25 @@ func CreateJWT(uId uuid.UUID) (string, error) {
 	return tokenStr, err
 }
 
-func ValidateJWT(t string) (string, error) {
+func ValidateJWT(t string) (uuid.UUID, error) {
 	token, err := jwt.ParseWithClaims(t, &models.JwtClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	}, jwt.WithLeeway(5*time.Second))
 	if err != nil {
-		return "", err
+		return uuid.Nil, err
 	}
 
 	claims, ok := token.Claims.(*models.JwtClaims)
 	if !ok {
-		return "", errors.New("unknown claims type")
+		return uuid.Nil, errors.New("unknown claims type")
 	}
 
-	return claims.UserId, nil
+	userUUID, err := uuid.Parse(claims.UserId)
+	if err != nil {
+		// uuid format is wrong
+		fmt.Println(err)
+		return uuid.Nil, err
+	}
+
+	return userUUID, nil
 }

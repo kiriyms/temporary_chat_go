@@ -1,0 +1,16 @@
+{{ block "room-list" . }}
+    <div>
+        {{ if .UserRooms }}
+            {{ range .UserRooms }}
+                <div class="userId">
+                    {{ .Id }}
+                </div>
+                <hr>
+            {{ end }}
+        {{ else }}
+            <div class="userId">No rooms yet!</div>
+        {{ end }}
+        <br>
+        <button class="userId new-room" type="submit" hx-post="/room" hx-target="#room-list" >New room</button>
+    </div>
+{{ end }}
