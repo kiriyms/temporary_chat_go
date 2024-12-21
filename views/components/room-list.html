@@ -31,9 +31,9 @@
 {{ end }}
 
 {{ block "room-list-counter-oob" . }}
-    <div id="room-list-counter" class="room-list-counter" hx-swap-oob="OuterHTML">{{ .CurrentRooms }}/{{ .MaxRooms }}</div>
+    <div id="room-list-counter" class="room-list-counter" hx-swap-oob="true">{{ .CurrentRooms }}/{{ .MaxRooms }}</div>
 {{ end }}
 
 {{ block "room-list-counter-error-oob" . }}
-    <div id="room-list-counter" class="room-list-counter room-list-counter-error" hx-swap-oob="OuterHTML">{{ .CurrentRooms }}/{{ .MaxRooms }}</div>
+    <div id="room-list-counter" class="room-list-counter room-list-counter-error" hx-swap-oob="true">{{ .CurrentRooms }}/{{ .MaxRooms }}</div>
 {{ end }}

@@ -102,6 +102,18 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	// or goroutine with a 3-5 minute timer. by the end the room is deleted
 	// frontend html needs to have some js to show a timer and remove room element on-client
 
+	if len(ph.RoomList.GetUserRooms(userUUID)) >= 5 {
+		dataCounter := struct {
+			CurrentRooms int
+			MaxRooms     int
+		}{
+			CurrentRooms: len(ph.RoomList.GetUserRooms(userUUID)),
+			MaxRooms:     5,
+		}
+		// should return http.Status ERROR and add js script to templating to allow swaps on error
+		return c.Render(http.StatusOK, "room-list-counter-error-oob", dataCounter)
+	}
+
 	hub := models.NewHub()
 	go hub.Start()
 	// room := models.NewRoom(userUUID, nil)
