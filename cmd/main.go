@@ -25,12 +25,13 @@ func main() {
 
 	userList := models.NewUserList()
 	roomList := models.NewRoomList()
-	h := handlers.NewProductionHandler(userList, roomList)
+	var h handlers.Handler = handlers.NewProductionHandler(userList, roomList)
 	// h := handlers.NewMockHandler()
 
 	e.GET("/", h.HandleGetMain)
 	e.POST("/", h.HandlePostProfile)
 	e.POST("/room", h.HandlePostRoom)
+	e.GET("/ws/:roomId", h.HandleGetWebSocket)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }

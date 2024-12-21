@@ -6,6 +6,8 @@ import (
 
 	"github.com/Kirill-Sirotkin/temporary_chat_go/models"
 	"github.com/Kirill-Sirotkin/temporary_chat_go/utils"
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 )
 
@@ -14,7 +16,7 @@ type ProductionHandler struct {
 	RoomList *models.RoomList
 }
 
-func NewProductionHandler(ul *models.UserList, rl *models.RoomList) handler {
+func NewProductionHandler(ul *models.UserList, rl *models.RoomList) *ProductionHandler {
 	return &ProductionHandler{
 		UserList: ul,
 		RoomList: rl,
@@ -39,6 +41,7 @@ func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
 	data.Rooms = true
 	data.UserData = user
 	data.UserRooms = ph.RoomList.GetUserRooms(user.Id)
+	data.CurrentRooms = len(ph.RoomList.GetUserRooms(user.Id))
 
 	return c.Render(http.StatusOK, "index", data)
 }
@@ -62,7 +65,7 @@ func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 
 	newUser := ph.UserList.GetUserById(user.Id)
 	if newUser == nil {
-		// handle error: no user in memory list
+		// handle error: no user in memory list error 500
 		fmt.Println("User was not found!!!")
 		return c.String(http.StatusInternalServerError, "User was not found!")
 	}
@@ -98,9 +101,16 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	// besides the room list in-memory (possibly to be removed) needs to start a websocket(???)
 	// or goroutine with a 3-5 minute timer. by the end the room is deleted
 	// frontend html needs to have some js to show a timer and remove room element on-client
-	room := models.NewRoom(userUUID)
-	ph.RoomList.AddRoom(room)
 
+	hub := models.NewHub()
+	go hub.Start()
+	// room := models.NewRoom(userUUID, nil)
+	room := models.NewRoom(userUUID, hub)
+	hub.Id = room.Id
+	ph.RoomList.AddRoom(room)
+	utils.StartRoomTimer(ph.RoomList, room.Id)
+
+	// refresh token
 	token, err := utils.CreateJWT(userUUID)
 	if err != nil {
 		fmt.Println("Could not create JWT!!!")
@@ -112,11 +122,67 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	jwtCookie.Value = token
 	c.SetCookie(jwtCookie)
 
-	data := struct {
-		UserRooms []*models.Room
+	dataCounter := struct {
+		CurrentRooms int
+		MaxRooms     int
 	}{
-		ph.RoomList.GetUserRooms(userUUID),
+		CurrentRooms: len(ph.RoomList.GetUserRooms(userUUID)),
+		MaxRooms:     5,
 	}
 
-	return c.Render(http.StatusOK, "room-list", data)
+	data := struct {
+		Id uuid.UUID
+	}{
+		room.Id,
+	}
+
+	c.Render(http.StatusOK, "room-list-counter-oob", dataCounter)
+	return c.Render(http.StatusOK, "room-card", data)
+}
+
+func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
+	userUUID, err := utils.GetAndValidateCookieJWT(c)
+	if err != nil {
+		// POST in htmx template should do an oob swap into id="main"
+		// change http.Status to appropriate error
+		return c.Render(http.StatusUnauthorized, "login", nil)
+	}
+	fmt.Println(userUUID)
+
+	userRooms := ph.RoomList.GetUserRooms(userUUID)
+	roomIdParam := c.Param("roomId")
+	roomUUID, err := uuid.Parse(roomIdParam)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	var hub *models.Hub = nil
+	for _, room := range userRooms {
+		if room.Id == roomUUID {
+			hub = room.Hub
+		}
+	}
+	if hub == nil {
+		return c.String(http.StatusInternalServerError, "no room with that ID")
+	}
+
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+
+	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	client := models.NewClient(userUUID, hub, conn)
+	client.Hub.Register <- client
+
+	go client.WriteToWebSocket()
+	go client.ReadFromWebSocket()
+
+	return nil
 }

@@ -1,0 +1,35 @@
+{{ block "room-card" . }}
+    <li 
+        hx-ext="ws" 
+        ws-connect="/ws/{{ .Id }}" 
+        hx-on:htmx:ws-close="removeRoomAndUpdateCounter(this)" 
+        hx-on:click="console.log('clicked room')"
+        class="room-card" 
+        id="room-{{ .Id }}"
+    >
+        {{ .Id }}
+        <form id="ws-form" ws-send>
+            <input name="content">
+        </form>
+    </li>
+    <script>
+        function removeRoomAndUpdateCounter(element) {
+            element.remove()
+            const counter = htmx.find("#room-list-counter")
+            const counterText = counter.innerText
+            const lastCount = counterText.split('/')[0]
+            const maxCount = counterText.split('/')[1]
+            let newCountNum = -1
+            try {
+                newCountNum = parseInt(lastCount) - 1
+            }catch {
+                const result = document.createTextNode(newCountNum.toString() + '/' + maxCount)
+                counter.replaceChildren(result)
+                return
+            }
+            const newCount = newCountNum.toString()
+            const result = document.createTextNode(newCount + '/' + maxCount)
+            counter.replaceChildren(result)
+        }
+    </script>
+{{ end }}

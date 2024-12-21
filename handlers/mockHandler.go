@@ -11,7 +11,7 @@ import (
 
 type MockHandler struct{}
 
-func NewMockHandler() handler {
+func NewMockHandler() *MockHandler {
 	return &MockHandler{}
 }
 
@@ -42,5 +42,9 @@ func (mh *MockHandler) HandlePostProfile(c echo.Context) error {
 }
 
 func (mh *MockHandler) HandlePostRoom(c echo.Context) error {
+	return nil
+}
+
+func (mh *MockHandler) HandleGetWebSocket(c echo.Context) error {
 	return nil
 }

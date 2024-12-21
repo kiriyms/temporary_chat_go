@@ -1,3 +1,11 @@
+@import './login.css';
+@import './rooms.css';
+@import './components/chat-window.css';
+@import './components/login-form.css';
+@import './components/room-list.css';
+@import './components/room-card.css';
+@import './components/spinner.css';
+
 * {
     padding: 0;
     margin: 0;

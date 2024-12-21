@@ -1,16 +1,37 @@
 {{ block "room-list" . }}
-    <div>
-        {{ if .UserRooms }}
-            {{ range .UserRooms }}
-                <div class="userId">
-                    {{ .Id }}
-                </div>
-                <hr>
-            {{ end }}
-        {{ else }}
-            <div class="userId">No rooms yet!</div>
-        {{ end }}
-        <br>
-        <button class="userId new-room" type="submit" hx-post="/room" hx-target="#room-list" >New room</button>
+    <div class="room-list-wrapper">
+        <div class="room-list-wrapper-block">
+            <div class="room-list-label">
+                Rooms
+            </div>
+            <ul class="room-list-list" id="room-list-list">
+                {{ if .UserRooms }}
+                    {{ range .UserRooms }}
+                        {{ template "room-card" . }}
+                    {{ end }}
+                {{ end }}
+            </ul>
+        </div>
+        <div class="room-list-wrapper-block">
+            {{ template "room-list-counter" . }}
+            <button 
+                id="room-list-new-room-button" 
+                class="room-list-new-room-button" 
+                type="submit" 
+                hx-post="/room" 
+                hx-target="#room-list-list" 
+                hx-swap="beforeend"
+            >
+                NEW ROOM
+            </button>
+        </div>
     </div>
+{{ end }}
+
+{{ block "room-list-counter" . }}
+    <div id="room-list-counter" class="room-list-counter">{{ .CurrentRooms }}/{{ .MaxRooms }}</div>
+{{ end }}
+
+{{ block "room-list-counter-oob" . }}
+    <div id="room-list-counter" class="room-list-counter" hx-swap-oob="OuterHTML">{{ .CurrentRooms }}/{{ .MaxRooms }}</div>
 {{ end }}

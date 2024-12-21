@@ -1,3 +1,48 @@
-.new-room {
-    border: 3px solid red;
+.room-list-wrapper {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 2rem;
+    justify-content: space-between;
+}
+
+.room-list-wrapper-block {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}
+
+.room-list-label {
+    font-weight: bold;
+}
+
+.room-list-list {
+    list-style-type: none;
+    width: 100%;
+}
+
+.room-list-counter {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.room-list-new-room-button {
+    font-size: 1.5rem;
+    color: rgb(25, 25, 25);
+    padding: 8px;
+    font-weight: bold;
+    border-radius: 5px;
+    border: 2px solid darkslategray;
+    background-color: white;
+    box-shadow: rgba(50, 50, 93, 0.5) 0px 50px 100px -20px, 
+                rgba(0, 0, 0, 0.6) 0px 30px 60px -30px, 
+                rgba(10, 37, 64, 0.7) 0px -2px 6px 0px inset;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
 }
