@@ -15,7 +15,6 @@ func StartRoomTimer(rl *models.RoomList, rId uuid.UUID) {
 		<-timer.C
 		log.Printf("TIMER: room %v timer ran out", rId)
 		room := rl.GetRoomById(rId)
-		// room.Hub.Stop()
 		close(room.Hub.Broadcast)
 		rl.RemoveRoomById(rId)
 	}()
