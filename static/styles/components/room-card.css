@@ -1,8 +1,29 @@
+.room-card-wrapper {
+    display: flex;
+    align-items: center;
+}
+
 .room-card {
+    cursor: pointer;
     font-size: 1rem;
     margin: 5px;
     padding: 5px;
     border-radius: 5px;
     background-color: rgba(0, 0, 0, 0.5);
     border: 5px solid darkslategray;
+    display: flex;
+}
+
+.room-card-active {
+    cursor: pointer;
+    font-size: 1rem;
+    margin: 5px;
+    padding: 5px;
+    border-radius: 5px;
+    background-color: beige;
+    border: 5px solid darkslategray;
+}
+
+.room-card-timer {
+    font-size: 2rem;
 }

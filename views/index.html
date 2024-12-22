@@ -13,7 +13,7 @@
     </head>
 
     <body>
-        <div class="main-wrapper" id="main">
+        <div id="main" class="main-wrapper">
             {{ if .Rooms }}
                 {{ template "rooms" . }}
             {{ else }}
@@ -22,4 +22,53 @@
         </div>
     </body>
     </html>
+
+    <script>
+        // htmx.logAll()
+        function startRoomTimer(element, timeRemaining) {
+            const findString = '#room-card-timer-' + element.id.slice(-36)
+            const timerElement = htmx.find(findString)
+            const initTimerTextNode = getTimerTextNodeFromSeconds(timeRemaining)
+            timerElement.replaceChildren(initTimerTextNode)
+
+            const timer = setInterval(function() {
+                if (--timeRemaining < 0) {
+                    clearInterval(timer)
+                }
+                const newTimerTextNode = getTimerTextNodeFromSeconds(timeRemaining)
+                timerElement.replaceChildren(newTimerTextNode)
+            }, 1000)
+        }
+
+        function getTimerTextNodeFromSeconds(seconds) {
+            const quotient = Math.floor(seconds / 60)
+            const remainder = seconds % 60
+            let result
+            if (remainder.toString().length < 2) {
+                result = document.createTextNode(quotient.toString() + ':0' + remainder.toString())
+            } else {
+                result = document.createTextNode(quotient.toString() + ':' + remainder.toString())
+            }
+            return result
+        }
+
+        function removeRoomAndUpdateCounter(element) {
+            element.remove()
+            const counter = htmx.find("#room-list-counter")
+            const counterText = counter.innerText
+            const lastCount = counterText.split('/')[0]
+            const maxCount = counterText.split('/')[1]
+            let newCountNum = -1
+            try {
+                newCountNum = parseInt(lastCount) - 1
+            }catch {
+                const result = document.createTextNode(newCountNum.toString() + '/' + maxCount)
+                counter.replaceChildren(result)
+                return
+            }
+            const newCount = newCountNum.toString()
+            const result = document.createTextNode(newCount + '/' + maxCount)
+            counter.replaceChildren(result)
+        }
+    </script>
 {{ end }}

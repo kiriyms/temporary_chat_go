@@ -1,7 +1,7 @@
 {{ block "login-form" . }}
     <form class="login-form-card">
-        <div class="login-form-card-avatar" id="login-form-card-avatar">
-            <div class="login-form-card-avatar-delete" id="login-form-card-avatar-delete">
+        <div id="login-form-card-avatar" class="login-form-card-avatar">
+            <div id="login-form-card-avatar-delete" class="login-form-card-avatar-delete">
                 <img
                     src="/static/images/trash_light.svg"
                     alt="delete-avatar"
@@ -9,10 +9,10 @@
                 >
             </div>
             <img 
+                id="avatar-image"
                 src="/static/images/avatar_placeholder.png" 
                 alt="avatar" 
                 class="login-form-card-avatar-image" 
-                id="avatar-image"
             >
         </div>
         <label for="avatar-input" class="login-form-card-upload">
@@ -22,9 +22,9 @@
             </div>
         </label>
         <input 
+            id="avatar-input" 
             type="file" 
             name="avatar-input"
-            id="avatar-input" 
             accept="image/gif, image/jpeg, image/png" 
             onchange="uploadTemporaryAvatar(this)" 
             hidden

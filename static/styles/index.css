@@ -54,3 +54,7 @@ body {
 .visible {
     visibility: visible !important;
 }
+
+.display-none {
+    display: none !important;
+}

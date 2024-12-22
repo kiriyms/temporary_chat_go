@@ -143,9 +143,11 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	}
 
 	data := struct {
-		Id uuid.UUID
+		Id           uuid.UUID
+		TimerSeconds int
 	}{
-		room.Id,
+		Id:           room.Id,
+		TimerSeconds: 20,
 	}
 
 	c.Render(http.StatusOK, "room-list-counter-oob", dataCounter)

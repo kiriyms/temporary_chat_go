@@ -1,35 +1,28 @@
 {{ block "room-card" . }}
     <li 
+        id="room-ws-{{ .Id }}"
+        class="room-card-wrapper"
         hx-ext="ws" 
         ws-connect="/ws/{{ .Id }}" 
-        hx-on:htmx:ws-close="removeRoomAndUpdateCounter(this)" 
+        hx-on::ws-close="removeRoomAndUpdateCounter(this)" 
+        hx-on::load="startRoomTimer(this, {{ .TimerSeconds }})"
         hx-on:click="console.log('clicked room')"
-        class="room-card" 
-        id="room-{{ .Id }}"
+    >
+        <div id="room-card-{{ .Id }}" class="room-card">
+            {{ .Id }}
+        </div>
+        <div id="room-card-timer-{{ .Id }}" class="room-card-timer">
+            0:20
+        </div>
+    </li>
+{{ end }}
+
+{{ block "room-card-oob" . }}
+    <div 
+        id="room-card-{{ .Id }}"
+        class="room-card-active"
+        hx-swap-oob="true"
     >
         {{ .Id }}
-        <form id="ws-form" ws-send>
-            <input name="content">
-        </form>
-    </li>
-    <script>
-        function removeRoomAndUpdateCounter(element) {
-            element.remove()
-            const counter = htmx.find("#room-list-counter")
-            const counterText = counter.innerText
-            const lastCount = counterText.split('/')[0]
-            const maxCount = counterText.split('/')[1]
-            let newCountNum = -1
-            try {
-                newCountNum = parseInt(lastCount) - 1
-            }catch {
-                const result = document.createTextNode(newCountNum.toString() + '/' + maxCount)
-                counter.replaceChildren(result)
-                return
-            }
-            const newCount = newCountNum.toString()
-            const result = document.createTextNode(newCount + '/' + maxCount)
-            counter.replaceChildren(result)
-        }
-    </script>
+    </div>
 {{ end }}
