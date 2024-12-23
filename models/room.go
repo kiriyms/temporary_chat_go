@@ -8,8 +8,8 @@ import (
 )
 
 type Room struct {
-	Id            uuid.UUID
-	Messages      []Message
+	Id uuid.UUID
+	// Messages      []Message
 	Users         []uuid.UUID
 	Hub           *Hub
 	IsActive      bool
@@ -18,10 +18,10 @@ type Room struct {
 
 func NewRoom(creatorId uuid.UUID, h *Hub) *Room {
 	room := &Room{
-		Id:       uuid.New(),
-		Messages: make([]Message, 0),
-		Users:    make([]uuid.UUID, 0),
-		Hub:      h,
+		Id: uuid.New(),
+		// Messages: make([]Message, 0),
+		Users: make([]uuid.UUID, 0),
+		Hub:   h,
 	}
 	room.Users = append(room.Users, creatorId)
 

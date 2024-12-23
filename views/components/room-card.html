@@ -5,10 +5,16 @@
         hx-ext="ws" 
         ws-connect="/ws/{{ .Id }}" 
         hx-on::ws-close="removeRoomAndUpdateCounter(this)" 
-        hx-on::load="startRoomTimer(this, {{ .TimerSeconds }})"
-        hx-on:click="console.log('clicked room')"
+        hx-on::ws-open="startRoomTimer(this, {{ .TimerSeconds }})"
+        hx-trigger="click"
     >
-        <div id="room-card-{{ .Id }}" class="room-card">
+        <div 
+            id="room-card-{{ .Id }}" 
+            class="room-card"
+            hx-get="/room/{{ .Id }}"
+            hx-target="#chat-window-wrapper"
+            hx-trigger="click"
+        >
             {{ .Id }}
         </div>
         <div id="room-card-timer-{{ .Id }}" class="room-card-timer">
@@ -17,11 +23,27 @@
     </li>
 {{ end }}
 
-{{ block "room-card-oob" . }}
-    <div 
+{{ block "room-card-active-oob" . }}
+    <div
         id="room-card-{{ .Id }}"
         class="room-card-active"
         hx-swap-oob="true"
+        hx-get="/room/{{ .Id }}"
+        hx-target="#chat-window-wrapper"
+        hx-trigger="click"
+    >
+        {{ .Id }}
+    </div>
+{{ end }}
+
+{{ block "room-card-inactive-oob" . }}
+    <div 
+        id="room-card-{{ .Id }}"
+        class="room-card"
+        hx-swap-oob="true"
+        hx-get="/room/{{ .Id }}"
+        hx-target="#chat-window-wrapper"
+        hx-trigger="click"
     >
         {{ .Id }}
     </div>

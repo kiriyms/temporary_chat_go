@@ -7,4 +7,5 @@ type Handler interface {
 	HandlePostProfile(c echo.Context) error
 	HandlePostRoom(c echo.Context) error
 	HandleGetWebSocket(c echo.Context) error
+	HandleGetRoom(c echo.Context) error
 }

@@ -1,3 +1,15 @@
 {{ block "chat-window" . }}
-    <div class="userId">chat!</div>
+    <div id="chat-window-wrapper" class="chat-window-wrapper">
+        <div class="chat-window-empty-text">
+            Create or join <br> 
+            a room and click it <br> 
+            to start chatting
+        </div>
+    </div>
+{{ end }}
+
+{{ block "chat-window-active" . }}
+    <div>
+        Active! {{ .Id }}
+    </div>
 {{ end }}

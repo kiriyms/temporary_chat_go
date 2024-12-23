@@ -154,6 +154,7 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	return c.Render(http.StatusOK, "room-card", data)
 }
 
+// FIX "return err" to return c.Render with proper http status codes
 func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
@@ -199,4 +200,49 @@ func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 	go client.ReadFromWebSocket()
 
 	return nil
+}
+
+// FIX "return err" to return c.Render with proper http status codes
+func (ph *ProductionHandler) HandleGetRoom(c echo.Context) error {
+	userUUID, err := utils.GetAndValidateCookieJWT(c)
+	if err != nil {
+		// POST in htmx template should do an oob swap into id="main"
+		// change http.Status to appropriate error
+		return c.Render(http.StatusUnauthorized, "login", nil)
+	}
+	fmt.Println(userUUID)
+
+	roomIdParam := c.Param("roomId")
+	roomUUID, err := uuid.Parse(roomIdParam)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	if ph.RoomList.GetRoomById(roomUUID) == nil {
+		return c.String(http.StatusInternalServerError, "Room with given ID not found")
+	}
+
+	userRooms := ph.RoomList.GetUserRooms(userUUID)
+
+	for _, room := range userRooms {
+		roomData := struct {
+			Id uuid.UUID
+		}{
+			Id: room.Id,
+		}
+		if room.Id == roomUUID {
+			c.Render(http.StatusOK, "room-card-active-oob", roomData)
+			continue
+		}
+		c.Render(http.StatusOK, "room-card-inactive-oob", roomData)
+	}
+
+	data := struct {
+		Id uuid.UUID
+	}{
+		Id: roomUUID,
+	}
+
+	return c.Render(http.StatusOK, "chat-window-active", data)
 }

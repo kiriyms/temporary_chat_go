@@ -20,7 +20,7 @@ type Hub struct {
 	Register   chan *Client
 	Unregister chan *Client
 
-	messages []*Message
+	Messages []*Message
 }
 
 func NewHub() *Hub {
@@ -48,7 +48,7 @@ func (h *Hub) Start() {
 			log.Printf("HUB: hub %v getting broadcast: %v", h.Id, msg)
 			h.mu.RLock()
 
-			h.messages = append(h.messages, msg)
+			h.Messages = append(h.Messages, msg)
 
 			byteTemplate, err := GetTemplateBytes("message-card", msg)
 			log.Printf("%v", string(byteTemplate))
@@ -76,7 +76,7 @@ func (h *Hub) Start() {
 			h.mu.Unlock()
 
 			log.Printf("HUB: sending message history from hub %v to client %v", h.Id, client.Id)
-			for _, msg := range h.messages {
+			for _, msg := range h.Messages {
 				byteTemplate, err := GetTemplateBytes("message-card", msg)
 				log.Printf("%v", string(byteTemplate))
 				if err != nil {

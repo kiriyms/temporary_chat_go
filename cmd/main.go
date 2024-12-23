@@ -31,6 +31,7 @@ func main() {
 	e.GET("/", h.HandleGetMain)
 	e.POST("/", h.HandlePostProfile)
 	e.POST("/room", h.HandlePostRoom)
+	e.GET("/room/:roomId", h.HandleGetRoom)
 	e.GET("/ws/:roomId", h.HandleGetWebSocket)
 
 	e.Logger.Fatal(e.Start(":1323"))
