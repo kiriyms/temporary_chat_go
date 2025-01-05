@@ -54,7 +54,7 @@ func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 	file, err := c.FormFile("avatar-input")
 	fileName := "static/images/avatar_placeholder.png"
 	if err == nil {
-		fileName, err := utils.UploadFile(file)
+		fileName, err = utils.UploadFile(file)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, "Error with file upload: "+err.Error())
 		}

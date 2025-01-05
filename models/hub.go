@@ -70,13 +70,15 @@ func (h *Hub) Start() {
 			user := h.Users.GetUserById(msg.Id)
 
 			data := struct {
-				TimeCode string
-				UserName string
-				Content  string
+				TimeCode   string
+				UserName   string
+				Content    string
+				AvatarPath string
 			}{
-				TimeCode: timeString[:2] + ":" + timeString[2:4] + ":" + timeString[4:],
-				UserName: user.Name,
-				Content:  msg.Content,
+				TimeCode:   timeString[:2] + ":" + timeString[2:4] + ":" + timeString[4:],
+				UserName:   user.Name,
+				Content:    msg.Content,
+				AvatarPath: user.AvatarPath,
 			}
 
 			// This loop is for notifications
@@ -173,13 +175,15 @@ func (h *Hub) Start() {
 				user := h.Users.GetUserById(msg.Id)
 
 				data := struct {
-					TimeCode string
-					UserName string
-					Content  string
+					TimeCode   string
+					UserName   string
+					Content    string
+					AvatarPath string
 				}{
-					TimeCode: timeString[:2] + ":" + timeString[2:4] + ":" + timeString[4:],
-					UserName: user.Name,
-					Content:  msg.Content,
+					TimeCode:   timeString[:2] + ":" + timeString[2:4] + ":" + timeString[4:],
+					UserName:   user.Name,
+					Content:    msg.Content,
+					AvatarPath: user.AvatarPath,
 				}
 
 				var err error = nil

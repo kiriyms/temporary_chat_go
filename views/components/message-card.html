@@ -6,6 +6,7 @@
             </div>
             <div class="message-card-usercontent-wrapper">
                 <div class="message-card-user">
+                    <img class="message-card-avatar" src="{{ .AvatarPath }}" alt="avatar">
                     {{ .UserName }} (you)
                 </div>
                 <div class="message-card-content">
@@ -30,6 +31,7 @@
             <div class="message-card-usercontent-wrapper">
                 <div class="message-card-user">
                     {{ .UserName }}
+                    <img class="message-card-avatar" src="{{ .AvatarPath }}" alt="avatar">
                 </div>
                 <div class="message-card-content-other">
                     {{ .Content }}
