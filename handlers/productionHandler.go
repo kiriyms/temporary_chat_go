@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/Kirill-Sirotkin/temporary_chat_go/models"
@@ -48,17 +49,17 @@ func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
 
 func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 	userName := c.FormValue("name-input")
-	fmt.Println(userName)
+	log.Printf("name uploaded: %v", userName)
 
 	file, err := c.FormFile("avatar-input")
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "Error with file upload: "+err.Error())
+	fileName := "static/images/avatar_placeholder.png"
+	if err == nil {
+		fileName, err := utils.UploadFile(file)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "Error with file upload: "+err.Error())
+		}
+		log.Printf("filename uploaded: %v", fileName)
 	}
-	fileName, err := utils.UploadFile(file)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "Error with file upload: "+err.Error())
-	}
-	fmt.Println(fileName)
 
 	user := models.NewUser(userName, fileName)
 	ph.UserList.AddUser(user)
@@ -92,15 +93,9 @@ func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
-		// POST in htmx template should do an oob swap into id="main"
-		// change http.Status to appropriate error
-		return c.Render(http.StatusUnauthorized, "login", nil)
+		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 	fmt.Println(userUUID)
-
-	// besides the room list in-memory (possibly to be removed) needs to start a websocket(???)
-	// or goroutine with a 3-5 minute timer. by the end the room is deleted
-	// frontend html needs to have some js to show a timer and remove room element on-client
 
 	if len(ph.RoomList.GetUserRooms(userUUID)) >= 5 {
 		dataCounter := struct {
@@ -110,13 +105,11 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 			CurrentRooms: len(ph.RoomList.GetUserRooms(userUUID)),
 			MaxRooms:     5,
 		}
-		// should return http.Status ERROR and add js script to templating to allow swaps on error
 		return c.Render(http.StatusOK, "room-list-counter-error-oob", dataCounter)
 	}
 
 	hub := models.NewHub(ph.UserList)
 	go hub.Start()
-	// room := models.NewRoom(userUUID, nil)
 	room := models.NewRoom(userUUID, hub)
 	hub.Id = room.Id
 	ph.RoomList.AddRoom(room)
@@ -158,9 +151,7 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
-		// POST in htmx template should do an oob swap into id="main"
-		// change http.Status to appropriate error
-		return c.Render(http.StatusUnauthorized, "login", nil)
+		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 	fmt.Println(userUUID)
 
@@ -206,9 +197,7 @@ func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 func (ph *ProductionHandler) HandleGetRoom(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
-		// POST in htmx template should do an oob swap into id="main"
-		// change http.Status to appropriate error
-		return c.Render(http.StatusUnauthorized, "login", nil)
+		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 	fmt.Println(userUUID)
 
@@ -250,9 +239,7 @@ func (ph *ProductionHandler) HandleGetRoom(c echo.Context) error {
 func (ph *ProductionHandler) HandleGetWebSocketChat(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
-		// POST in htmx template should do an oob swap into id="main"
-		// change http.Status to appropriate error
-		return c.Render(http.StatusUnauthorized, "login", nil)
+		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 	fmt.Println(userUUID)
 

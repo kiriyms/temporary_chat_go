@@ -6,3 +6,14 @@
         {{ template "login-form" . }}
     </div>
 {{ end }}
+
+{{ block "login-oob" . }}
+    <div id="main" class="main-wrapper" hx-swap-oob="true">
+        <div id="login-wrapper" class="login-wrapper">
+            <div class="login-title">
+                TEMPOCHAT_
+            </div>
+            {{ template "login-form" . }}
+        </div>
+    </div>
+{{ end }}

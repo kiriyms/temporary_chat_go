@@ -25,6 +25,14 @@
 
     <script>
         // htmx.logAll()
+
+        document.body.addEventListener('htmx:beforeSwap', function (evt) {
+            if (evt.detail.xhr.status === 401) {
+                evt.detail.shouldSwap = true;
+                evt.detail.isError = false;
+            }
+        });
+        
         function startRoomTimer(element, timeRemaining) {
             const findString = '#room-card-timer-' + element.id.slice(-36)
             const timerElement = htmx.find(findString)
