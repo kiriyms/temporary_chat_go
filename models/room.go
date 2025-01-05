@@ -8,18 +8,14 @@ import (
 )
 
 type Room struct {
-	Id uuid.UUID
-	// Messages      []Message
-	Users         []uuid.UUID
-	Hub           *Hub
-	IsActive      bool
-	Notifications int
+	Id    uuid.UUID
+	Users []uuid.UUID
+	Hub   *Hub
 }
 
 func NewRoom(creatorId uuid.UUID, h *Hub) *Room {
 	room := &Room{
-		Id: uuid.New(),
-		// Messages: make([]Message, 0),
+		Id:    uuid.New(),
 		Users: make([]uuid.UUID, 0),
 		Hub:   h,
 	}

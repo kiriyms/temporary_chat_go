@@ -70,5 +70,12 @@
             const result = document.createTextNode(newCount + '/' + maxCount)
             counter.replaceChildren(result)
         }
+
+        function scrollChatWindow(event) {
+            if (!(event.detail.target instanceof HTMLUListElement)) {
+                return
+            }
+            event.detail.target.scrollTop = event.detail.target.scrollHeight
+        }
     </script>
 {{ end }}

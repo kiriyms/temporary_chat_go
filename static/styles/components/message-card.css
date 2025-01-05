@@ -1,0 +1,42 @@
+.message-card {
+    display: flex;
+    gap: 1rem;
+}
+
+.message-card-other {
+    display: flex;
+    gap: 1rem;
+    align-self: flex-end;
+    text-align: end;
+}
+
+.message-card-timecode {
+    color: darkslategray;
+}
+
+.message-card-usercontent-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.message-card-user {
+    font-weight: bold;
+}
+
+.message-card-content {
+    width: fit-content;
+    border-radius: 5px;
+    padding: 5px;
+    background-color: cornflowerblue;
+    max-width: 400px;
+}
+
+.message-card-content-other {
+    width: fit-content;
+    align-self: end;
+    border-radius: 5px;
+    padding: 5px;
+    background-color: rgba(255, 255, 255, 0.8);
+    max-width: 400px;
+}

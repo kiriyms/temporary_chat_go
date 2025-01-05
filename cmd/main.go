@@ -33,6 +33,7 @@ func main() {
 	e.POST("/room", h.HandlePostRoom)
 	e.GET("/room/:roomId", h.HandleGetRoom)
 	e.GET("/ws/:roomId", h.HandleGetWebSocket)
+	e.GET("/ws/chat/:roomId", h.HandleGetWebSocketChat)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }

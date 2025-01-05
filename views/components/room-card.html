@@ -6,7 +6,6 @@
         ws-connect="/ws/{{ .Id }}" 
         hx-on::ws-close="removeRoomAndUpdateCounter(this)" 
         hx-on::ws-open="startRoomTimer(this, {{ .TimerSeconds }})"
-        hx-trigger="click"
     >
         <div 
             id="room-card-{{ .Id }}" 
@@ -20,6 +19,7 @@
         <div id="room-card-timer-{{ .Id }}" class="room-card-timer">
             0:20
         </div>
+        <!-- <div class="room-card-notification"></div> TODO LATER (NOTIFICATION BUBBLE) -->
     </li>
 {{ end }}
 

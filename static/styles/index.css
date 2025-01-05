@@ -5,6 +5,7 @@
 @import './components/room-list.css';
 @import './components/room-card.css';
 @import './components/spinner.css';
+@import './components/message-card.css';
 
 * {
     padding: 0;

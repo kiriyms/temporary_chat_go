@@ -114,7 +114,7 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 		return c.Render(http.StatusOK, "room-list-counter-error-oob", dataCounter)
 	}
 
-	hub := models.NewHub()
+	hub := models.NewHub(ph.UserList)
 	go hub.Start()
 	// room := models.NewRoom(userUUID, nil)
 	room := models.NewRoom(userUUID, hub)
@@ -197,7 +197,7 @@ func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 	client.Hub.Register <- client
 
 	go client.WriteToWebSocket()
-	go client.ReadFromWebSocket()
+	go client.ReadFromWebSocket(false)
 
 	return nil
 }
@@ -245,4 +245,51 @@ func (ph *ProductionHandler) HandleGetRoom(c echo.Context) error {
 	}
 
 	return c.Render(http.StatusOK, "chat-window-active", data)
+}
+
+func (ph *ProductionHandler) HandleGetWebSocketChat(c echo.Context) error {
+	userUUID, err := utils.GetAndValidateCookieJWT(c)
+	if err != nil {
+		// POST in htmx template should do an oob swap into id="main"
+		// change http.Status to appropriate error
+		return c.Render(http.StatusUnauthorized, "login", nil)
+	}
+	fmt.Println(userUUID)
+
+	userRooms := ph.RoomList.GetUserRooms(userUUID)
+	roomIdParam := c.Param("roomId")
+	roomUUID, err := uuid.Parse(roomIdParam)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	var hub *models.Hub = nil
+	for _, room := range userRooms {
+		if room.Id == roomUUID {
+			hub = room.Hub
+		}
+	}
+	if hub == nil {
+		return c.String(http.StatusInternalServerError, "no room with that ID")
+	}
+
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+
+	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	client := models.NewClient(userUUID, hub, conn)
+	client.Hub.RegisterChat <- client
+
+	go client.WriteToWebSocket()
+	go client.ReadFromWebSocket(true)
+
+	return nil
 }

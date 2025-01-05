@@ -78,10 +78,14 @@ func (c *Client) WriteToWebSocket() {
 	}
 }
 
-func (c *Client) ReadFromWebSocket() {
+func (c *Client) ReadFromWebSocket(isWebsocketChat bool) {
 	defer func() {
 		log.Printf("CLIENT: closing READ goroutine, unregistering client %v from hub %v", c.Id, c.Hub.Id)
-		c.Hub.Unregister <- c
+		if isWebsocketChat {
+			c.Hub.UnregisterChat <- c
+		} else {
+			c.Hub.Unregister <- c
+		}
 		c.conn.Close()
 	}()
 

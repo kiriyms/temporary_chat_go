@@ -1,3 +1,43 @@
 {{ block "message-card" . }}
-    <div>{{ .Id }} says: {{ .Content }}</div>
+    <div hx-swap-oob="beforeend:#chat-window-active-messages" hx-on::load="console.log(this)" >
+        <li class="message-card">
+            <div class="message-card-timecode">
+                {{ .TimeCode }}
+            </div>
+            <div class="message-card-usercontent-wrapper">
+                <div class="message-card-user">
+                    {{ .UserName }} (you)
+                </div>
+                <div class="message-card-content">
+                    {{ .Content }}
+                </div>
+            </div>
+        </li>
+    </div>
+    <input 
+        id="chat-window-active-bottom-input"
+        class="chat-window-active-input"
+        name="content"
+        value=""
+        autofocus
+        hx-swap-oob="true"
+    >
+{{ end }}
+
+{{ block "message-card-other" . }}
+    <div hx-swap-oob="beforeend:#chat-window-active-messages">
+        <li class="message-card-other">
+            <div class="message-card-usercontent-wrapper">
+                <div class="message-card-user">
+                    {{ .UserName }}
+                </div>
+                <div class="message-card-content-other">
+                    {{ .Content }}
+                </div>
+            </div>
+            <div class="message-card-timecode">
+                {{ .TimeCode }}
+            </div>
+        </li>
+    </div>
 {{ end }}
