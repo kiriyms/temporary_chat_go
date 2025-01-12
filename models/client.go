@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -116,6 +117,11 @@ func (c *Client) ReadFromWebSocket(isWebsocketChat bool) {
 		}
 
 		msg.Id = c.Id
+		msg.Content = strings.TrimSpace(msg.Content)
+		if msg.Content == "" {
+			log.Printf("CLIENT: decoded message info: id: %v, text: EMPTY -> skipping broadcast", msg.Id)
+			continue
+		}
 		log.Printf("CLIENT: decoded message info: id: %v, text: %v", msg.Id, msg.Content)
 		c.Hub.Broadcast <- msg
 	}

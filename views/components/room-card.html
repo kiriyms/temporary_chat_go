@@ -1,23 +1,22 @@
 {{ block "room-card" . }}
     <li 
-        id="room-ws-{{ .Id }}"
+        id="room-ws-{{ .Room.Id }}"
         class="room-card-wrapper"
         hx-ext="ws" 
-        ws-connect="/ws/{{ .Id }}" 
+        ws-connect="/ws/{{ .Room.Id }}" 
         hx-on::ws-close="removeRoomAndUpdateCounter(this)" 
         hx-on::ws-open="startRoomTimer(this, {{ .TimerSeconds }})"
     >
         <div 
-            id="room-card-{{ .Id }}" 
+            id="room-card-{{ .Room.Id }}" 
             class="room-card"
-            hx-get="/room/{{ .Id }}"
+            hx-get="/room/{{ .Room.Id }}"
             hx-target="#chat-window-wrapper"
             hx-trigger="click"
         >
-            {{ .Id }}
+            {{ .Room.Name }}
         </div>
-        <div id="room-card-timer-{{ .Id }}" class="room-card-timer">
-            0:20
+        <div id="room-card-timer-{{ .Room.Id }}" class="room-card-timer">
         </div>
         <!-- <div class="room-card-notification"></div> TODO LATER (NOTIFICATION BUBBLE) -->
     </li>
@@ -32,7 +31,7 @@
         hx-target="#chat-window-wrapper"
         hx-trigger="click"
     >
-        {{ .Id }}
+        {{ .Name }}
     </div>
 {{ end }}
 
@@ -45,6 +44,6 @@
         hx-target="#chat-window-wrapper"
         hx-trigger="click"
     >
-        {{ .Id }}
+        {{ .Name }}
     </div>
 {{ end }}

@@ -15,14 +15,14 @@
             </div>
         </li>
     </div>
-    <input 
+    <textarea 
         id="chat-window-active-bottom-input"
         class="chat-window-active-input"
         name="content"
-        value=""
         autofocus
+        value=""
         hx-swap-oob="true"
-    >
+    ></textarea>
 {{ end }}
 
 {{ block "message-card-other" . }}

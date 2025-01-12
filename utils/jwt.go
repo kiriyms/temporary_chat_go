@@ -2,7 +2,6 @@ package utils
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"time"
 
@@ -15,13 +14,12 @@ func CreateJWT(uId uuid.UUID) (string, error) {
 	claims := models.JwtClaims{
 		UserId: uId.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(5 * time.Minute)),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
-	fmt.Println(tokenStr)
 	return tokenStr, err
 }
 
@@ -40,8 +38,6 @@ func ValidateJWT(t string) (uuid.UUID, error) {
 
 	userUUID, err := uuid.Parse(claims.UserId)
 	if err != nil {
-		// uuid format is wrong
-		fmt.Println(err)
 		return uuid.Nil, err
 	}
 

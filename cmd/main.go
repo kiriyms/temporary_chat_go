@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"github.com/Kirill-Sirotkin/temporary_chat_go/handlers"
 	"github.com/Kirill-Sirotkin/temporary_chat_go/models"
@@ -19,7 +20,13 @@ func main() {
 
 	e := echo.New()
 	e.Renderer = utils.NewTemplates()
-	e.Use(middleware.Logger())
+
+	loggerCfg := middleware.LoggerConfig{
+		Format:           `${time_custom} [ECHO]: ${method} "${host}" "${uri}"` + "\n" + strings.Repeat(" ", 28) + `status:${status}, error:"${error}", time:"${latency_human}"` + "\n",
+		CustomTimeFormat: "2006-01-02 15:04:05",
+	}
+
+	e.Use(middleware.LoggerWithConfig(loggerCfg))
 	e.Static("/static", "static")
 	e.Static("/uploads", "uploads")
 
@@ -34,6 +41,7 @@ func main() {
 	e.GET("/room/:roomId", h.HandleGetRoom)
 	e.GET("/ws/:roomId", h.HandleGetWebSocket)
 	e.GET("/ws/chat/:roomId", h.HandleGetWebSocketChat)
+	e.POST("/room/join", h.HandlePostJoinRoom)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }

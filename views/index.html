@@ -34,6 +34,7 @@
         });
         
         function startRoomTimer(element, timeRemaining) {
+            console.log('received time remaining: ' + timeRemaining)
             const findString = '#room-card-timer-' + element.id.slice(-36)
             const timerElement = htmx.find(findString)
             const initTimerTextNode = getTimerTextNodeFromSeconds(timeRemaining)
@@ -84,6 +85,12 @@
                 return
             }
             event.detail.target.scrollTop = event.detail.target.scrollHeight
+        }
+
+        function changeChatButtonBevahior() {
+            // htmx.find("#chat-window-active-input-icon").addEventListener("click", function(event) {
+            //     event.preventDefault()
+            // })
         }
     </script>
 {{ end }}

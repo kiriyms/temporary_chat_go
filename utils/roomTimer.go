@@ -8,8 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func StartRoomTimer(rl *models.RoomList, rId uuid.UUID) {
-	timer := time.NewTimer(20 * time.Second)
+func NewRoomTimer(rl *models.RoomList, rId uuid.UUID) {
+	timer := time.NewTimer(30 * time.Second)
+
 	log.Printf("TIMER: starting room %v timer", rId)
 	go func() {
 		<-timer.C

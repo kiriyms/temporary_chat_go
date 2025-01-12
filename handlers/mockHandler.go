@@ -56,3 +56,7 @@ func (mh *MockHandler) HandleGetRoom(c echo.Context) error {
 func (mh *MockHandler) HandleGetWebSocketChat(c echo.Context) error {
 	return nil
 }
+
+func (mh *MockHandler) HandlePostJoinRoom(c echo.Context) error {
+	return nil
+}

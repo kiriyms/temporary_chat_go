@@ -65,6 +65,8 @@
     grid-column-start: 1;
     grid-column-end: 11;
     border-radius: 5px;
+    resize: none;
+    height: 2.8rem;
 }
 
 .chat-window-active-input-icon {

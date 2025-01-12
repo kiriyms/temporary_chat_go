@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/Kirill-Sirotkin/temporary_chat_go/models"
 	"github.com/Kirill-Sirotkin/temporary_chat_go/utils"
@@ -29,36 +30,48 @@ func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
 
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
+		log.Printf("[INFO]: token not found/invalid on initial page load. Serving index page with login. ErrMsg: %v", err)
 		return c.Render(http.StatusOK, "index", data)
 	}
 
 	user := ph.UserList.GetUserById(userUUID)
 	if user == nil {
-		// error: user not found although token is valid
-		fmt.Println("user not found although token is valid")
+		log.Printf("[ERROR]: user not found although token is valid")
 		return c.Render(http.StatusOK, "index", data)
+	}
+
+	userRooms := ph.RoomList.GetUserRooms(user.Id)
+	userRoomsWithTimer := make([]*models.RoomWithTimer, 0)
+
+	for _, room := range userRooms {
+		userRoomsWithTimer = append(userRoomsWithTimer, &models.RoomWithTimer{
+			Room:         *room,
+			TimerSeconds: int(time.Until(room.ExpireTime).Seconds()),
+		})
+
+		log.Printf("TIMER SECOND IN HANDLEGETMAIN: %v", int(time.Until(room.ExpireTime).Seconds()))
 	}
 
 	data.Rooms = true
 	data.UserData = user
-	data.UserRooms = ph.RoomList.GetUserRooms(user.Id)
+	data.UserRooms = userRoomsWithTimer
 	data.CurrentRooms = len(ph.RoomList.GetUserRooms(user.Id))
 
+	log.Printf("[INFO]: token found and valid. Serving index page with room data")
 	return c.Render(http.StatusOK, "index", data)
 }
 
 func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 	userName := c.FormValue("name-input")
-	log.Printf("name uploaded: %v", userName)
 
 	file, err := c.FormFile("avatar-input")
 	fileName := "static/images/avatar_placeholder.png"
 	if err == nil {
 		fileName, err = utils.UploadFile(file)
 		if err != nil {
+			log.Printf("[ERROR]: error with file upload. ErrMsg: %v", err)
 			return c.String(http.StatusInternalServerError, "Error with file upload: "+err.Error())
 		}
-		log.Printf("filename uploaded: %v", fileName)
 	}
 
 	user := models.NewUser(userName, fileName)
@@ -66,14 +79,13 @@ func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 
 	newUser := ph.UserList.GetUserById(user.Id)
 	if newUser == nil {
-		// handle error: no user in memory list error 500
-		fmt.Println("User was not found!!!")
+		log.Printf("[ERROR]: created user was not found in UserList")
 		return c.String(http.StatusInternalServerError, "User was not found!")
 	}
 
 	token, err := utils.CreateJWT(newUser.Id)
 	if err != nil {
-		fmt.Println("Could not create JWT!!!")
+		log.Printf("[ERROR]: could not create JWT. ErrMsg: %v", err)
 		return c.String(http.StatusInternalServerError, "Could not create JWT!")
 	}
 
@@ -82,20 +94,45 @@ func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 	jwtCookie.Value = token
 	c.SetCookie(jwtCookie)
 
+	userRooms := ph.RoomList.GetUserRooms(user.Id)
+	userRoomsWithTimer := make([]*models.RoomWithTimer, 0)
+
+	for _, room := range userRooms {
+		userRoomsWithTimer = append(userRoomsWithTimer, &models.RoomWithTimer{
+			Room:         *room,
+			TimerSeconds: int(time.Until(room.ExpireTime).Seconds()),
+		})
+
+		log.Printf("TIMER SECOND IN HANDLEGETMAIN: %v", int(time.Until(room.ExpireTime).Seconds()))
+	}
+
 	data := models.NewIndexData()
 	data.Rooms = true
 	data.UserData = newUser
-	data.UserRooms = ph.RoomList.GetUserRooms(newUser.Id)
+	data.UserRooms = userRoomsWithTimer
 
+	log.Printf("[INFO]: new profile posted. Uploaded name: %v, avatar filename: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"user info: id: %v, name: %v, avatarPath: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"active user rooms count: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"generated token: %v",
+		userName, fileName, newUser.Id, newUser.Name, newUser.AvatarPath, len(data.UserRooms), token)
 	return c.Render(http.StatusOK, "rooms", data)
 }
 
 func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
+		log.Printf("[ERROR]: POST room unauthorized request. ErrMsg: %v", err)
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
-	fmt.Println(userUUID)
+
+	roomName := c.FormValue("room-name")
 
 	if len(ph.RoomList.GetUserRooms(userUUID)) >= 5 {
 		dataCounter := struct {
@@ -108,17 +145,28 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 		return c.Render(http.StatusOK, "room-list-counter-error-oob", dataCounter)
 	}
 
+	roomCode := utils.GenerateRoomCode(6)
+	for {
+		if ph.RoomList.IsRoomCodeUsed(roomCode) {
+			roomCode = utils.GenerateRoomCode(6)
+			continue
+		}
+		break
+	}
+
 	hub := models.NewHub(ph.UserList)
-	go hub.Start()
-	room := models.NewRoom(userUUID, hub)
+	defer func() {
+		go hub.Start()
+	}()
+	room := models.NewRoom(userUUID, hub, roomName, roomCode)
+	utils.NewRoomTimer(ph.RoomList, room.Id)
 	hub.Id = room.Id
 	ph.RoomList.AddRoom(room)
-	utils.StartRoomTimer(ph.RoomList, room.Id)
 
 	// refresh token
 	token, err := utils.CreateJWT(userUUID)
 	if err != nil {
-		fmt.Println("Could not create JWT!!!")
+		log.Printf("[ERROR]: could not create JWT. ErrMsg: %v", err)
 		return c.String(http.StatusInternalServerError, "Could not create JWT!")
 	}
 
@@ -136,13 +184,37 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	}
 
 	data := struct {
-		Id           uuid.UUID
 		TimerSeconds int
+		Room         struct {
+			Id   uuid.UUID
+			Name string
+		}
 	}{
-		Id:           room.Id,
-		TimerSeconds: 20,
+		TimerSeconds: 30,
+		Room: struct {
+			Id   uuid.UUID
+			Name string
+		}{
+			Id:   room.Id,
+			Name: room.Name,
+		},
 	}
 
+	log.Printf("[INFO]: new room posted. Uploaded room name: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"user info: id: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"room info: id: %v, name: %v, code: %v, userCount: %v, expireTime: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"hub info: id: %v, msgCount: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"new user JWT: %v",
+		roomName, userUUID, room.Id, room.Name, room.Code, len(room.Users), room.ExpireTime, hub.Id, len(hub.Messages), token)
+	c.Render(http.StatusOK, "room-list-new-room-input-oob", nil)
 	c.Render(http.StatusOK, "room-list-counter-oob", dataCounter)
 	return c.Render(http.StatusOK, "room-card", data)
 }
@@ -151,26 +223,27 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
+		log.Printf("[ERROR]: GET websocket unauthorized request. ErrMsg: %v", err)
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
-	fmt.Println(userUUID)
 
-	userRooms := ph.RoomList.GetUserRooms(userUUID)
+	// userRooms := ph.RoomList.GetUserRooms(userUUID)
 	roomIdParam := c.Param("roomId")
 	roomUUID, err := uuid.Parse(roomIdParam)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		log.Printf("[ERROR]: provided room id parameter '%v' could not be parsed into UUID. ErrMsg: %v", roomIdParam, err)
+		return c.String(http.StatusInternalServerError, "Provided room id parameter could not be parsed into UUID")
 	}
 
 	var hub *models.Hub = nil
-	for _, room := range userRooms {
+	for _, room := range ph.RoomList.GetRooms() {
 		if room.Id == roomUUID {
 			hub = room.Hub
 		}
 	}
 	if hub == nil {
-		return c.String(http.StatusInternalServerError, "no room with that ID")
+		log.Printf("[ERROR]: hub with id %v not found", roomUUID)
+		return c.String(http.StatusInternalServerError, "No room with that ID")
 	}
 
 	upgrader := websocket.Upgrader{
@@ -180,16 +253,26 @@ func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 
 	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		log.Printf("[ERROR]: could not upgrade request to websocket. ErrMsg: %v", err)
+		return c.String(http.StatusInternalServerError, "Could not upgrade request to websocket")
 	}
 
 	client := models.NewClient(userUUID, hub, conn)
 	client.Hub.Register <- client
 
-	go client.WriteToWebSocket()
-	go client.ReadFromWebSocket(false)
+	defer func() {
+		go client.WriteToWebSocket()
+		go client.ReadFromWebSocket(false)
+	}()
 
+	log.Printf("[INFO]: upgraded request to websocket for room card with id %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"hub info: id: %v, msgCount: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"user info: id: %v",
+		roomUUID, hub.Id, len(hub.Messages), userUUID)
 	return nil
 }
 
@@ -197,28 +280,31 @@ func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 func (ph *ProductionHandler) HandleGetRoom(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
+		log.Printf("[ERROR]: GET room unauthorized request. ErrMsg: %v", err)
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
-	fmt.Println(userUUID)
 
 	roomIdParam := c.Param("roomId")
 	roomUUID, err := uuid.Parse(roomIdParam)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		log.Printf("[ERROR]: provided room id parameter '%v' could not be parsed into UUID. ErrMsg: %v", roomIdParam, err)
+		return c.String(http.StatusInternalServerError, "Provided room id parameter could not be parsed into UUID")
 	}
 
 	if ph.RoomList.GetRoomById(roomUUID) == nil {
-		return c.String(http.StatusInternalServerError, "Room with given ID not found")
+		log.Printf("[ERROR]: room with id %v not found", roomUUID)
+		return c.String(http.StatusInternalServerError, "No room with that ID")
 	}
 
 	userRooms := ph.RoomList.GetUserRooms(userUUID)
 
 	for _, room := range userRooms {
 		roomData := struct {
-			Id uuid.UUID
+			Id   uuid.UUID
+			Name string
 		}{
-			Id: room.Id,
+			Id:   room.Id,
+			Name: room.Name,
 		}
 		if room.Id == roomUUID {
 			c.Render(http.StatusOK, "room-card-active-oob", roomData)
@@ -227,38 +313,52 @@ func (ph *ProductionHandler) HandleGetRoom(c echo.Context) error {
 		c.Render(http.StatusOK, "room-card-inactive-oob", roomData)
 	}
 
+	room := ph.RoomList.GetRoomById(roomUUID)
 	data := struct {
-		Id uuid.UUID
+		Id   uuid.UUID
+		Name string
+		Code string
 	}{
-		Id: roomUUID,
+		Id:   room.Id,
+		Name: room.Name,
+		Code: room.Code,
 	}
 
+	log.Printf("[INFO]: sent room data"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"room info: id: %v, name: %v, code: %v, userCount: %v, expireTime: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"user info: id: %v",
+		room.Id, room.Name, room.Code, len(room.Users), room.ExpireTime, userUUID)
 	return c.Render(http.StatusOK, "chat-window-active", data)
 }
 
 func (ph *ProductionHandler) HandleGetWebSocketChat(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
+		log.Printf("[ERROR]: GET websocket chat unauthorized request. ErrMsg: %v", err)
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
-	fmt.Println(userUUID)
 
-	userRooms := ph.RoomList.GetUserRooms(userUUID)
+	// userRooms := ph.RoomList.GetUserRooms(userUUID)
 	roomIdParam := c.Param("roomId")
 	roomUUID, err := uuid.Parse(roomIdParam)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		log.Printf("[ERROR]: provided room id parameter '%v' could not be parsed into UUID. ErrMsg: %v", roomIdParam, err)
+		return c.String(http.StatusInternalServerError, "Provided room id parameter could not be parsed into UUID")
 	}
 
 	var hub *models.Hub = nil
-	for _, room := range userRooms {
+	for _, room := range ph.RoomList.GetRooms() {
 		if room.Id == roomUUID {
 			hub = room.Hub
 		}
 	}
 	if hub == nil {
-		return c.String(http.StatusInternalServerError, "no room with that ID")
+		log.Printf("[ERROR]: hub with id %v not found", roomUUID)
+		return c.String(http.StatusInternalServerError, "No room with that ID")
 	}
 
 	upgrader := websocket.Upgrader{
@@ -268,15 +368,117 @@ func (ph *ProductionHandler) HandleGetWebSocketChat(c echo.Context) error {
 
 	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		log.Printf("[ERROR]: could not upgrade request to websocket. ErrMsg: %v", err)
+		return c.String(http.StatusInternalServerError, "Could not upgrade request to websocket")
 	}
 
 	client := models.NewClient(userUUID, hub, conn)
 	client.Hub.RegisterChat <- client
 
-	go client.WriteToWebSocket()
-	go client.ReadFromWebSocket(true)
+	defer func() {
+		go client.WriteToWebSocket()
+		go client.ReadFromWebSocket(true)
+	}()
 
+	log.Printf("[INFO]: upgraded request to websocket for chat with id %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"hub info: id: %v, msgCount: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"user info: id: %v",
+		roomUUID, hub.Id, len(hub.Messages), userUUID)
 	return nil
+}
+
+func (ph *ProductionHandler) HandlePostJoinRoom(c echo.Context) error {
+	userUUID, err := utils.GetAndValidateCookieJWT(c)
+	if err != nil {
+		log.Printf("[ERROR]: POST join unauthorized request. ErrMsg: %v", err)
+		return c.Render(http.StatusUnauthorized, "login-oob", nil)
+	}
+
+	roomCode := c.FormValue("room-code")
+	room := ph.RoomList.GetRoomByCode(roomCode)
+
+	if room == nil {
+		log.Printf("[ERROR]: room with code %v not found", roomCode)
+		return c.String(http.StatusInternalServerError, "No room with that code")
+	}
+
+	userRooms := ph.RoomList.GetUserRooms(userUUID)
+	for _, room := range userRooms {
+		if room.Code == roomCode {
+			log.Printf("[ERROR]: user %v already in room %v", userUUID, roomCode)
+			return c.String(http.StatusInternalServerError, "User already in room")
+		}
+	}
+
+	// refresh token
+	token, err := utils.CreateJWT(userUUID)
+	if err != nil {
+		log.Printf("[ERROR]: could not create JWT. ErrMsg: %v", err)
+		return c.String(http.StatusInternalServerError, "Could not create JWT!")
+	}
+
+	if len(ph.RoomList.GetUserRooms(userUUID)) >= 5 {
+		dataCounter := struct {
+			CurrentRooms int
+			MaxRooms     int
+		}{
+			CurrentRooms: len(ph.RoomList.GetUserRooms(userUUID)),
+			MaxRooms:     5,
+		}
+		return c.Render(http.StatusOK, "room-list-counter-error-oob", dataCounter)
+	}
+
+	ph.RoomList.AddUserToRoom(room.Id, userUUID)
+
+	jwtCookie := new(http.Cookie)
+	jwtCookie.Name = "jwt"
+	jwtCookie.Value = token
+	c.SetCookie(jwtCookie)
+
+	dataCounter := struct {
+		CurrentRooms int
+		MaxRooms     int
+	}{
+		CurrentRooms: len(ph.RoomList.GetUserRooms(userUUID)),
+		MaxRooms:     5,
+	}
+
+	data := struct {
+		TimerSeconds int
+		Room         struct {
+			Id   uuid.UUID
+			Name string
+		}
+	}{
+		TimerSeconds: int(time.Until(room.ExpireTime).Seconds()),
+		Room: struct {
+			Id   uuid.UUID
+			Name string
+		}{
+			Id:   room.Id,
+			Name: room.Name,
+		},
+	}
+
+	log.Printf("[INFO]: joined user to room. Uploaded room code: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"room info: id: %v, name: %v, code: %v, userCount: %v, expireTime: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"seconds remaining in room: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"user info: id: %v"+
+		"\n"+
+		strings.Repeat(" ", 28)+
+		"generated token: %v",
+		roomCode, room.Id, room.Name, room.Code, len(room.Users), room.ExpireTime, int(time.Until(room.ExpireTime).Seconds()), userUUID, token)
+	c.Render(http.StatusOK, "room-list-join-room-input-oob", nil)
+	c.Render(http.StatusOK, "room-list-counter-oob", dataCounter)
+	return c.Render(http.StatusOK, "room-card", data)
 }

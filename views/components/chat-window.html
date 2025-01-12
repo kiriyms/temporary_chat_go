@@ -15,23 +15,32 @@
         ws-connect="/ws/chat/{{ .Id }}"
         hx-on::oob-after-swap="scrollChatWindow(event)" 
         hx-on::ws-close="this.remove()" 
+        hx-on::load="changeChatButtonBevahior()"
     >
         <div class="chat-window-active-top">
-            <div class="chat-window-active-room-label">{{ .Id }}</div>
-            <button class="chat-window-active-room-link">ROOM LINK</button>
+            <div class="chat-window-active-room-label">{{ .Name }}</div>
+            <!-- <button class="chat-window-active-room-link">ROOM LINK</button> -->
+             <div class="chat-window-active-room-link">{{ .Code }}</div>
         </div>
         <form
             id="chat-window-active-bottom" 
             class="chat-window-active-bottom"
             ws-send
+            hx-trigger="
+                keydown[key==='Enter' && !shiftKey && event.target.matches('textarea')], 
+                click[event.target.id === 'chat-window-active-input-icon']
+            "
         >
-            <input 
+            <textarea 
                 id="chat-window-active-bottom-input"
                 class="chat-window-active-input"
                 name="content"
-                autofocus
-            >
-            <button class="chat-window-active-input-icon" type="submit"></button>
+            ></textarea>
+            <button 
+                id="chat-window-active-input-icon" 
+                class="chat-window-active-input-icon" 
+                type="button"
+            ></button>
         </form>
         <ul id="chat-window-active-messages" class="chat-window-active-messages">
         </ul>

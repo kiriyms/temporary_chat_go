@@ -5,16 +5,48 @@
         </div>
         <div class="room-list-wrapper-block">
             {{ template "room-list-counter" . }}
-            <button 
-                id="room-list-new-room-button" 
-                class="room-list-new-room-button" 
-                type="submit" 
+            <form 
+                id="room-list-new-room-wrapper"
+                class="room-list-new-room-wrapper"
                 hx-post="/room" 
                 hx-target="#room-list-list" 
                 hx-swap="beforeend"
             >
-                NEW ROOM
-            </button>
+                <input
+                    id="room-list-new-room-input"
+                    class="room-list-new-room-input"   
+                    name="room-name" 
+                    placeholder="Room name"
+                >
+                <button 
+                    id="room-list-new-room-button" 
+                    class="room-list-new-room-button" 
+                    type="submit" 
+                >
+                    NEW ROOM
+                </button>
+            </form>
+            <form 
+                id="room-list-join-room-wrapper"
+                class="room-list-new-room-wrapper"
+                hx-post="/room/join" 
+                hx-target="#room-list-list" 
+                hx-swap="beforeend"
+            >
+                <input
+                    id="room-list-join-room-input"
+                    class="room-list-new-room-input"   
+                    name="room-code" 
+                    placeholder="Room code"
+                >
+                <button 
+                    id="room-list-join-room-button" 
+                    class="room-list-new-room-button" 
+                    type="submit" 
+                >
+                    JOIN ROOM
+                </button>
+            </form>
         </div>
         <ul 
             id="room-list-list" 
@@ -39,4 +71,26 @@
 
 {{ block "room-list-counter-error-oob" . }}
     <div id="room-list-counter" class="room-list-counter room-list-counter-error" hx-swap-oob="true">{{ .CurrentRooms }}/{{ .MaxRooms }}</div>
+{{ end }}
+
+{{ block "room-list-new-room-input-oob" . }}
+    <input
+        id="room-list-new-room-input"
+        class="room-list-new-room-input"   
+        name="room-name" 
+        placeholder="Room name"
+        value=""
+        hx-swap-oob="true"
+    >
+{{ end }}
+
+{{ block "room-list-join-room-input-oob" . }}
+    <input
+    id="room-list-join-room-input"
+    class="room-list-new-room-input"   
+    name="room-code" 
+    placeholder="Room code"
+    value=""
+    hx-swap-oob="true"
+    >
 {{ end }}

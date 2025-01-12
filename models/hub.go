@@ -69,13 +69,16 @@ func (h *Hub) Start() {
 			timeString := fmt.Sprintf("%d%02d%02d", hours, minutes, seconds)
 			user := h.Users.GetUserById(msg.Id)
 
+			timeString = timeString[:len(timeString)-2] + ":" + timeString[len(timeString)-2:]
+			timeString = timeString[:len(timeString)-5] + ":" + timeString[len(timeString)-5:]
+
 			data := struct {
 				TimeCode   string
 				UserName   string
 				Content    string
 				AvatarPath string
 			}{
-				TimeCode:   timeString[:2] + ":" + timeString[2:4] + ":" + timeString[4:],
+				TimeCode:   timeString,
 				UserName:   user.Name,
 				Content:    msg.Content,
 				AvatarPath: user.AvatarPath,
@@ -174,13 +177,16 @@ func (h *Hub) Start() {
 				timeString := fmt.Sprintf("%d%02d%02d", hours, minutes, seconds)
 				user := h.Users.GetUserById(msg.Id)
 
+				timeString = timeString[:len(timeString)-2] + ":" + timeString[len(timeString)-2:]
+				timeString = timeString[:len(timeString)-5] + ":" + timeString[len(timeString)-5:]
+
 				data := struct {
 					TimeCode   string
 					UserName   string
 					Content    string
 					AvatarPath string
 				}{
-					TimeCode:   timeString[:2] + ":" + timeString[2:4] + ":" + timeString[4:],
+					TimeCode:   timeString,
 					UserName:   user.Name,
 					Content:    msg.Content,
 					AvatarPath: user.AvatarPath,

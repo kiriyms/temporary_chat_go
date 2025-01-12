@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -10,14 +10,12 @@ import (
 func GetAndValidateCookieJWT(c echo.Context) (uuid.UUID, error) {
 	jwtCookie, err := c.Cookie("jwt")
 	if err != nil {
-		fmt.Println(err)
 		return uuid.Nil, err
 	}
 
 	userIdStr, err := ValidateJWT(jwtCookie.Value)
+	log.Printf("[INFO]: submitted jwt: %v", jwtCookie.Value)
 	if err != nil {
-		// jwt error (expired, etc.)
-		fmt.Println(err)
 		return uuid.Nil, err
 	}
 
