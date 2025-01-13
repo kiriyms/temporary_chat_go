@@ -1,6 +1,8 @@
 .room-card-wrapper {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
 }
 
 .room-card {
@@ -12,6 +14,9 @@
     background-color: rgba(0, 0, 0, 0.5);
     border: 5px solid darkslategray;
     display: flex;
+    width: 45%;
+    overflow: hidden;
+    white-space: initial;
 }
 
 .room-card-active {
@@ -22,8 +27,26 @@
     border-radius: 5px;
     background-color: beige;
     border: 5px solid darkslategray;
+    display: flex;
+    width: 45%;
+    overflow: hidden;
+    white-space: initial;
 }
 
 .room-card-timer {
     font-size: 2rem;
+}
+
+.room-card-exit {
+    color: rgb(25, 25, 25);
+    padding: 2px 10px;
+    font-weight: bold;
+    font-size: 1.5rem;
+    border-radius: 5px;
+    border: 2px solid darkslategray;
+    background-color: white;
+    box-shadow: rgba(50, 50, 93, 0.5) 0px 50px 100px -20px, 
+                rgba(0, 0, 0, 0.6) 0px 30px 60px -30px, 
+                rgba(10, 37, 64, 0.7) 0px -2px 6px 0px inset;
+    cursor: pointer;
 }

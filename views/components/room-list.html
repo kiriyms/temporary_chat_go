@@ -17,6 +17,7 @@
                     class="room-list-new-room-input"   
                     name="room-name" 
                     placeholder="Room name"
+                    maxlength="12"
                 >
                 <button 
                     id="room-list-new-room-button" 
@@ -38,6 +39,7 @@
                     class="room-list-new-room-input"   
                     name="room-code" 
                     placeholder="Room code"
+                    maxlength="6"
                 >
                 <button 
                     id="room-list-join-room-button" 
@@ -81,6 +83,7 @@
         placeholder="Room name"
         value=""
         hx-swap-oob="true"
+        maxlength="12"
     >
 {{ end }}
 
@@ -92,5 +95,6 @@
     placeholder="Room code"
     value=""
     hx-swap-oob="true"
+    maxlength="6"
     >
 {{ end }}
