@@ -1,0 +1,23 @@
+{{ block "notification" . }}
+    <div hx-swap-oob="beforeend:#notifications-wrapper">
+        {{ if .IsError }}
+            <li class="notification notification-error">[Error]: {{ .Content }}
+                <img 
+                    class="notification-close-button" 
+                    src="/static/images/close_icon.svg" 
+                    alt="close-notification-button"
+                    hx-on:click="this.parentElement.remove()"
+                >
+            </li>
+        {{ else if .IsInfo }}
+            <li class="notification notification-info">[Info]: {{ .Content }}
+                <img 
+                    class="notification-close-button" 
+                    src="/static/images/close_icon.svg" 
+                    alt="close-notification-button"
+                    hx-on:click="this.parentElement.remove()"
+                >
+            </li>
+        {{ end }}
+    </div>
+{{ end }}

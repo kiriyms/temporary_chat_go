@@ -6,6 +6,7 @@
 @import './components/room-card.css';
 @import './components/spinner.css';
 @import './components/message-card.css';
+@import './components/notification.css';
 
 * {
     padding: 0;
@@ -19,6 +20,7 @@ button {
 }
 
 body {
+    position: relative;
     background: rgb(5,0,80);
     background: linear-gradient(45deg,#0000 calc(25%/3), #293a85 0 calc(50%/3),
     #0000 0 calc(250%/3), #293a85 0 calc(275%/3),
@@ -46,6 +48,17 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.notifications-wrapper {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    bottom: 1rem;
+    right: 1rem;
+    width: 400px;
+    list-style-type: none;
 }
 
 .invisible {

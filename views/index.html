@@ -20,6 +20,8 @@
                 {{ template "login" . }}
             {{ end }}
         </div>
+        <ul id="notifications-wrapper" class="notifications-wrapper">
+        </ul>
     </body>
     </html>
 
@@ -27,7 +29,7 @@
         // htmx.logAll()
 
         document.body.addEventListener('htmx:beforeSwap', function (evt) {
-            if (evt.detail.xhr.status === 401) {
+            if (evt.detail.xhr.status === 401 || evt.detail.xhr.status === 422) {
                 evt.detail.shouldSwap = true;
                 evt.detail.isError = false;
             }
@@ -85,12 +87,6 @@
                 return
             }
             event.detail.target.scrollTop = event.detail.target.scrollHeight
-        }
-
-        function changeChatButtonBevahior() {
-            // htmx.find("#chat-window-active-input-icon").addEventListener("click", function(event) {
-            //     event.preventDefault()
-            // })
         }
     </script>
 {{ end }}

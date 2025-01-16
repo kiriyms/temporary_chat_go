@@ -37,6 +37,11 @@ func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
 	user := ph.UserList.GetUserById(userUUID)
 	if user == nil {
 		log.Printf("[ERROR]: user not found although token is valid")
+		notificationData := models.Notification{
+			IsError: true,
+			Content: "user not found although token is valid",
+		}
+		c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
 		return c.Render(http.StatusOK, "index", data)
 	}
 
@@ -102,8 +107,6 @@ func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 			Room:         *room,
 			TimerSeconds: int(time.Until(room.ExpireTime).Seconds()),
 		})
-
-		log.Printf("TIMER SECOND IN HANDLEGETMAIN: %v", int(time.Until(room.ExpireTime).Seconds()))
 	}
 
 	data := models.NewIndexData()
@@ -129,10 +132,18 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
 		log.Printf("[ERROR]: POST room unauthorized request. ErrMsg: %v", err)
+		notificationData := models.Notification{
+			IsError: true,
+			Content: "session token no longer valid",
+		}
+		c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 
 	roomName := c.FormValue("room-name")
+	if roomName == "" {
+		roomName = "New Room"
+	}
 
 	if len(ph.RoomList.GetUserRooms(userUUID)) >= 5 {
 		dataCounter := struct {
@@ -410,7 +421,11 @@ func (ph *ProductionHandler) HandlePostJoinRoom(c echo.Context) error {
 	for _, room := range userRooms {
 		if room.Code == roomCode {
 			log.Printf("[ERROR]: user %v already in room %v", userUUID, roomCode)
-			return c.String(http.StatusInternalServerError, "User already in room")
+			notificationData := models.Notification{
+				IsError: true,
+				Content: "you are already in this room",
+			}
+			return c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
 		}
 	}
 
