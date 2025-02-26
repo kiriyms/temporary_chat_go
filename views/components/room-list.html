@@ -1,7 +1,10 @@
 {{ block "room-list" . }}
     <div class="room-list-wrapper">
-        <div class="room-list-label">
-            Rooms
+        <div class="room-list-user-info-wrapper">
+            {{ template "user-info" .UserData }}
+            <div class="room-list-label">
+                Rooms
+            </div>
         </div>
         <div class="room-list-wrapper-block">
             {{ template "room-list-counter" . }}

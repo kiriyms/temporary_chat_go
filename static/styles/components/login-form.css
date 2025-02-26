@@ -129,3 +129,11 @@
 .login-form-card-submit-button:active {
     background-color: rgb(210, 210, 210);
 }
+
+.login-form-card-submit-modal {
+    justify-content: space-between;
+}
+
+.login-form-card-submit-button-red {
+    background-color: rgb(255, 140, 160);
+}

@@ -9,40 +9,51 @@
 {{ end }}
 
 {{ block "chat-window-active" . }}
-    <div 
+    <div
+        id="chat-window-active-wrapper-{{ .Id }}"
         class="chat-window-active-wrapper"
         hx-ext="ws" 
         ws-connect="/ws/chat/{{ .Id }}"
         hx-on::oob-after-swap="scrollChatWindow(event)" 
         hx-on::ws-close="this.remove()" 
-        hx-on::load="changeChatButtonBevahior()"
     >
-        <div class="chat-window-active-top">
-            <div class="chat-window-active-room-label">{{ .Name }}</div>
-            <!-- <button class="chat-window-active-room-link">ROOM LINK</button> -->
-             <div class="chat-window-active-room-link">Room code: {{ .Code }}</div>
-        </div>
-        <form
-            id="chat-window-active-bottom" 
-            class="chat-window-active-bottom"
-            ws-send
-            hx-trigger="
-                keydown[key==='Enter' && !shiftKey && event.target.matches('textarea')], 
-                click[event.target.id === 'chat-window-active-input-icon']
-            "
-        >
-            <textarea 
-                id="chat-window-active-bottom-input"
-                class="chat-window-active-input"
-                name="content"
-            ></textarea>
-            <button 
-                id="chat-window-active-input-icon" 
-                class="chat-window-active-input-icon" 
-                type="button"
-            ></button>
-        </form>
-        <ul id="chat-window-active-messages" class="chat-window-active-messages">
-        </ul>
+        <div class="chat-window-active-wrapper-inner">
+            <div class="chat-window-active-top">
+                <div class="chat-window-active-room-label">{{ .Name }}</div>
+                <div class="chat-window-active-room-link">Room code: {{ .Code }}</div>
+            </div>
+            <form
+                id="chat-window-active-bottom" 
+                class="chat-window-active-bottom"
+                ws-send
+                hx-trigger="
+                    keydown[key==='Enter' && !shiftKey && event.target.matches('textarea')], 
+                    click[event.target.id === 'chat-window-active-input-icon']
+                "
+            >
+                <textarea 
+                    id="chat-window-active-bottom-input"
+                    class="chat-window-active-input"
+                    name="content"
+                ></textarea>
+                <button 
+                    id="chat-window-active-input-icon" 
+                    class="chat-window-active-input-icon" 
+                    type="button"
+                ></button>
+            </form>
+            <ul id="chat-window-active-messages" class="chat-window-active-messages">
+            </ul>
+        </div>  
+        <div id="chat-window-active-room-users" class="chat-window-active-room-users">
+            <div class="chat-window-active-top chat-window-active-room-label chat-window-active-room-users-top">
+                Users
+            </div>
+            <ul id="chat-window-active-room-users-list" class="chat-window-active-room-users-list chat-window-active-messages">
+                {{ range .RoomUsers }}
+                    {{ template "room-user-info" .}}
+                {{ end }}
+            </ul>
+        </div>  
     </div>
 {{ end }}

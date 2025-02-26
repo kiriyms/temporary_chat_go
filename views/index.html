@@ -22,6 +22,8 @@
         </div>
         <ul id="notifications-wrapper" class="notifications-wrapper">
         </ul>
+        <div id="modal-wrapper" class="modal-wrapper">
+        </div>
     </body>
     </html>
 
@@ -35,9 +37,9 @@
             }
         });
         
-        function startRoomTimer(element, timeRemaining) {
-            console.log('received time remaining: ' + timeRemaining)
-            const findString = '#room-card-timer-' + element.id.slice(-36)
+        function startRoomTimer(event, element, timeRemaining) {
+            const id = element.id.slice(-36)
+            const findString = '#room-card-timer-' + id
             const timerElement = htmx.find(findString)
             const initTimerTextNode = getTimerTextNodeFromSeconds(timeRemaining)
             timerElement.replaceChildren(initTimerTextNode)
@@ -49,6 +51,22 @@
                 const newTimerTextNode = getTimerTextNodeFromSeconds(timeRemaining)
                 timerElement.replaceChildren(newTimerTextNode)
             }, 1000)
+
+            const btnElement = document.createElement("button")
+            btnElement.classList.add("room-card-exit")
+            const btnText = document.createTextNode("EXIT")
+            btnElement.appendChild(btnText)
+            event.detail.elt.insertBefore(btnElement, event.detail.elt.lastChild)
+            btnElement.addEventListener("click", function() {
+                const request = htmx.ajax('DELETE', '/' + id, element).then(function() {
+                    event.detail.event.currentTarget.close()
+                    try {
+                        htmx.find("#chat-window-active-wrapper-" + id).remove()
+                    } catch (error) {
+                        console.log("Failed to delete active room chat window: ", error)
+                    }
+                })
+            })
         }
 
         function getTimerTextNodeFromSeconds(seconds) {
@@ -82,11 +100,105 @@
             counter.replaceChildren(result)
         }
 
+        function removeElementById(id) {
+            htmx.find(id).remove()
+        }
+
         function scrollChatWindow(event) {
             if (!(event.detail.target instanceof HTMLUListElement)) {
                 return
             }
             event.detail.target.scrollTop = event.detail.target.scrollHeight
+        }
+
+        function handleRoomCardNotification(event) {
+            if (!event.detail.elt.id.includes('notification')) return
+            if (!event.detail.target.id.includes('notification')) return
+
+            const findString = '#room-card-' + event.detail.elt.id.slice(-36)
+            const roomCardElement = htmx.find(findString)
+
+            if (roomCardElement.classList.contains('room-card-active')) {
+                const count = 0
+                const result = document.createTextNode(count.toString())
+                event.detail.elt.replaceChildren(result)
+                return
+            } 
+
+            let result
+            const notifText = event.detail.target.innerText
+            if (notifText[0] === '+') {
+                result = document.createTextNode('+9')
+                event.detail.elt.replaceChildren(result)
+                return
+            }
+            let newCountNotif = 0
+            try {
+                newCountNotif = parseInt(notifText)
+            }catch {
+                const count = 0
+                const result = document.createTextNode(count.toString())
+                event.detail.elt.replaceChildren(result)
+                return
+            }
+            const count = newCountNotif + 1
+            if (count > 9) {
+                result = document.createTextNode('+9')
+            } else {
+                result = document.createTextNode(count.toString())
+            }
+            event.detail.elt.replaceChildren(result)
+        }
+
+        function checkIfRoomActive(event) {
+            const findString = '#room-card-' + event.detail.elt.id.slice(-36)
+            const roomCardElement = htmx.find(findString)
+
+            if (roomCardElement.classList.contains('room-card-active')) {
+                console.log(event.detail.elt.classList)
+                event.detail.elt.classList.add("display-none")
+                console.log(event.detail.elt.classList)
+            } 
+        }
+
+        function resetNotifications(id) {
+            const element = htmx.find("#room-card-notification-" + id)
+            result = document.createTextNode('0')
+            element.replaceChildren(result)
+            element.classList.add("display-none")
+        }
+
+        function onAvatarMouseOver(isModal) {
+            const avatarDelete = htmx.find('#login-form-card-avatar-delete')
+            const avatarInput = htmx.find('#avatar-input')
+            if (!isModal) {
+                if (avatarInput.value == "") { return } 
+            }
+            avatarDelete.classList.add("visible")
+        }
+
+        function onAvatarMouseOut() {
+            const avatarDelete = htmx.find('#login-form-card-avatar-delete')
+            avatarDelete.classList.remove("visible")
+        }
+
+        function onAvatarMouseClick() {
+            const image = htmx.find('#avatar-image')
+            const avatarInput = htmx.find('#avatar-input')
+            image.src = '/static/images/avatar_placeholder.png'
+            avatarInput.value = ""
+        }
+
+        function uploadTemporaryAvatar(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const image = htmx.find('#avatar-image')
+                    image.src = e.target.result
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
         }
     </script>
 {{ end }}

@@ -10,6 +10,7 @@ type User struct {
 	Id         uuid.UUID
 	Name       string
 	AvatarPath string
+	ResetTimer chan (bool)
 }
 
 func NewUser(name, avatarPath string) *User {
@@ -50,4 +51,14 @@ func (ul *UserList) GetUserById(id uuid.UUID) *User {
 	defer ul.mu.Unlock()
 
 	return ul.users[id]
+}
+
+func (ul *UserList) EditUser(id uuid.UUID, newName, newAvatar string) *User {
+	ul.mu.Lock()
+	defer ul.mu.Unlock()
+
+	user := ul.users[id]
+	user.Name = newName
+	user.AvatarPath = newAvatar
+	return user
 }

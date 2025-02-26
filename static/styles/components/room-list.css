@@ -21,7 +21,7 @@
 }
 
 .room-list-list {
-    top: 3rem;
+    top: 5.6rem;
     list-style-type: none;
     width: 100%;
     max-height: 50%;
@@ -79,4 +79,10 @@
     padding: 0 5px;
     font-size: 1.05rem;
     border-radius: 5px;
+}
+
+.room-list-user-info-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }

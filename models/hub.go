@@ -84,20 +84,28 @@ func (h *Hub) Start() {
 				AvatarPath: user.AvatarPath,
 			}
 
+			notificationData := struct {
+				Id uuid.UUID
+			}{
+				Id: h.Id,
+			}
+
 			// This loop is for notifications
 			// Target: room-card and it's notification bubble component
 			for client := range h.clients {
 				// Also make notificationByteTemplate to send to notification clients
-				byteTemplate, err := GetTemplateBytes("message-card", data)
-				log.Printf("%v", string(byteTemplate))
+				var err error = nil
+				var byteTemplate []byte
+				byteTemplate, err = GetTemplateBytes("room-card-notification", notificationData)
+				// log.Printf("%v", string(byteTemplate))
 				if err != nil {
 					log.Printf("HUB: failed to convert broadcasted message to bytes: %v", err)
-					// byteTemplate = []byte(msg.Content)
+					byteTemplate = []byte(msg.Content)
 				}
 
 				select {
 				// Replace []byte(msg.Content) with notificationByteTemplate
-				case client.Send <- []byte(msg.Content):
+				case client.Send <- byteTemplate:
 				default:
 					log.Printf("HUB: client unresponsive. Closing client %v", client.Id)
 					close(client.Send)
@@ -116,7 +124,7 @@ func (h *Hub) Start() {
 				} else {
 					byteTemplate, err = GetTemplateBytes("message-card-other", data)
 				}
-				log.Printf("%v", string(byteTemplate))
+				// log.Printf("%v", string(byteTemplate))
 				if err != nil {
 					log.Printf("HUB: failed to convert broadcasted message to bytes: %v", err)
 					byteTemplate = []byte(msg.Content)
@@ -143,13 +151,39 @@ func (h *Hub) Start() {
 			log.Printf("HUB: sending message history from hub %v to client %v", h.Id, client.Id)
 			for _, msg := range h.Messages {
 				byteTemplate, err := GetTemplateBytes("message-card", msg)
-				log.Printf("%v", string(byteTemplate))
+				// log.Printf("%v", string(byteTemplate))
 				if err != nil {
 					client.Send <- []byte(msg.Content)
 					continue
 				}
 
 				client.Send <- byteTemplate
+			}
+			data := struct {
+				Id         uuid.UUID
+				Name       string
+				AvatarPath string
+			}{
+				Id:         client.Id,
+				Name:       h.Users.GetUserById(client.Id).Name,
+				AvatarPath: h.Users.GetUserById(client.Id).AvatarPath,
+			}
+			for clientChat := range h.clientChats {
+				var err error = nil
+				var byteTemplate []byte
+				byteTemplate, err = GetTemplateBytes("room-user-info-new", data)
+				if err != nil {
+					log.Printf("HUB: failed to convert new user message to bytes: %v", err)
+					byteTemplate = []byte("Failed to convert new user message to bytes")
+				}
+
+				select {
+				case clientChat.Send <- byteTemplate:
+				default:
+					log.Printf("HUB: client chat unresponsive. Closing client chat %v", clientChat.Id)
+					close(clientChat.Send)
+					delete(h.clients, clientChat)
+				}
 			}
 
 		case client := <-h.Unregister:
@@ -158,9 +192,31 @@ func (h *Hub) Start() {
 
 			h.clients[client] = false
 			if _, ok := h.clients[client]; ok {
-				log.Printf("HUB: client unregistered. Closing client %v", client.Id)
 				close(client.Send)
+				log.Printf("HUB: client unregistered. Closing client %v", client.Id)
 				delete(h.clients, client)
+			}
+			data := struct {
+				Id uuid.UUID
+			}{
+				Id: client.Id,
+			}
+			for clientChat := range h.clientChats {
+				var err error = nil
+				var byteTemplate []byte
+				byteTemplate, err = GetTemplateBytes("room-user-info-delete", data)
+				if err != nil {
+					log.Printf("HUB: failed to convert remove user message to bytes: %v", err)
+					byteTemplate = []byte("Failed to convert new user message to bytes")
+				}
+
+				select {
+				case clientChat.Send <- byteTemplate:
+				default:
+					log.Printf("HUB: client chat unresponsive. Closing client chat %v", clientChat.Id)
+					close(clientChat.Send)
+					delete(h.clients, clientChat)
+				}
 			}
 
 			h.mu.Unlock()
@@ -199,7 +255,7 @@ func (h *Hub) Start() {
 				} else {
 					byteTemplate, err = GetTemplateBytes("message-card-other", data)
 				}
-				log.Printf("%v", string(byteTemplate))
+				// log.Printf("%v", string(byteTemplate))
 				if err != nil {
 					log.Printf("HUB: failed to convert broadcasted message to bytes: %v", err)
 					client.Send <- []byte(msg.Content)
@@ -215,14 +271,27 @@ func (h *Hub) Start() {
 
 			h.clientChats[client] = false
 			if _, ok := h.clientChats[client]; ok {
-				log.Printf("HUB: client unregistered. Closing client chat %v", client.Id)
 				close(client.Send)
+				log.Printf("HUB: client unregistered. Closing client chat %v", client.Id)
 				delete(h.clientChats, client)
 			}
 
 			h.mu.Unlock()
 		}
 	}
+}
+
+func (h *Hub) GetClientById(id uuid.UUID) *Client {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	for k := range h.clients {
+		if k.Id == id {
+			return k
+		}
+	}
+
+	return nil
 }
 
 func GetTemplateBytes(name string, data interface{}) ([]byte, error) {

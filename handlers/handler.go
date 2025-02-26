@@ -10,4 +10,7 @@ type Handler interface {
 	HandleGetWebSocketChat(c echo.Context) error
 	HandleGetRoom(c echo.Context) error
 	HandlePostJoinRoom(c echo.Context) error
+	HandleDeleteLeaveRoom(c echo.Context) error
+	HandleGetUserEditModal(c echo.Context) error
+	HandlePostUserEdit(c echo.Context) error
 }

@@ -42,6 +42,9 @@ func main() {
 	e.GET("/ws/:roomId", h.HandleGetWebSocket)
 	e.GET("/ws/chat/:roomId", h.HandleGetWebSocketChat)
 	e.POST("/room/join", h.HandlePostJoinRoom)
+	e.DELETE("/:roomId", h.HandleDeleteLeaveRoom)
+	e.GET("/edit", h.HandleGetUserEditModal)
+	e.POST("/edit", h.HandlePostUserEdit)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }

@@ -26,6 +26,7 @@ func UploadFile(file *multipart.FileHeader) (string, error) {
 	fileName := strings.TrimSuffix(file.Filename, filepath.Ext(file.Filename))
 	id := uuid.New()
 	fileSaveDir := filepath.Join(baseDir, fileName+id.String()+filepath.Ext(file.Filename))
+	fileSaveDir = strings.Replace(fileSaveDir, "\\", "/", 1)
 
 	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
 		err := os.Mkdir(baseDir, os.ModePerm)

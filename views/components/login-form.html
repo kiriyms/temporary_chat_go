@@ -1,6 +1,12 @@
 {{ block "login-form" . }}
     <form class="login-form-card">
-        <div id="login-form-card-avatar" class="login-form-card-avatar">
+        <div 
+            id="login-form-card-avatar" 
+            class="login-form-card-avatar"
+            hx-on:mouseover="onAvatarMouseOver({{ .EditModal }})"
+            hx-on:mouseout="onAvatarMouseOut()"
+            hx-on:click="onAvatarMouseClick()"
+        >
             <div id="login-form-card-avatar-delete" class="login-form-card-avatar-delete">
                 <img
                     src="/static/images/trash_light.svg"
@@ -8,12 +14,21 @@
                     class="login-form-card-avatar-delete-icon"
                 >
             </div>
-            <img 
-                id="avatar-image"
-                src="/static/images/avatar_placeholder.png" 
-                alt="avatar" 
-                class="login-form-card-avatar-image" 
-            >
+            {{ if .EditModal }}
+                <img 
+                    id="avatar-image"
+                    src="{{ .AvatarPath }}" 
+                    alt="avatar" 
+                    class="login-form-card-avatar-image" 
+                >
+            {{ else }}
+                <img 
+                    id="avatar-image"
+                    src="/static/images/avatar_placeholder.png" 
+                    alt="avatar" 
+                    class="login-form-card-avatar-image" 
+                >
+            {{ end }}
         </div>
         <label for="avatar-input" class="login-form-card-upload">
             <div class="login-form-card-upload-icon"></div>
@@ -21,61 +36,100 @@
                 UPLOAD
             </div>
         </label>
-        <input 
-            id="avatar-input" 
-            type="file" 
-            name="avatar-input"
-            accept="image/gif, image/jpeg, image/png" 
-            onchange="uploadTemporaryAvatar(this)" 
-            hidden
-        >
-        <div class="login-form-card-empty"></div>
-        <input class="login-form-card-input" name="name-input" placeholder="Enter your name...">
-        <div class="login-form-card-submit">
-            <button 
-                class="login-form-card-submit-button" 
-                type="submit"
-                hx-post="/"
-                hx-target="#login-wrapper"
-                hx-encoding="multipart/form-data"
-                hx-swap="outerHTML"
+        {{ if .EditModal }}
+            <input 
+                id="avatar-input" 
+                type="file" 
+                name="avatar-input"
+                accept="image/gif, image/jpeg, image/png" 
+                onchange="uploadTemporaryAvatar(this)" 
+                hidden
             >
-                SUBMIT
-            </button>
-        </div>
+        {{ else }}
+            <input 
+                id="avatar-input" 
+                type="file" 
+                name="avatar-input"
+                accept="image/gif, image/jpeg, image/png" 
+                onchange="uploadTemporaryAvatar(this)" 
+                hidden
+            >
+        {{ end }}
+        <div class="login-form-card-empty"></div>
+        {{ if .EditModal }}
+            <input 
+                class="login-form-card-input" 
+                name="name-input" 
+                placeholder="Edit your name..."
+                maxlength="12"
+                value="{{ .Name }}"
+            >
+        {{ else }}
+            <input 
+                class="login-form-card-input" 
+                name="name-input" 
+                placeholder="Enter your name..."
+                maxlength="12"
+            >
+        {{ end }}
+        {{ if .EditModal }}
+            <div class="login-form-card-submit login-form-card-submit-modal">
+                <button 
+                    class="login-form-card-submit-button login-form-card-submit-button-red"
+                    hx-on:click="removeElementById('#user-edit-modal')"
+                    type="button"
+                >
+                    CANCEL
+                </button>
+                <button 
+                    class="login-form-card-submit-button" 
+                    type="submit"
+                    hx-post="/edit"
+                    hx-target="#user-info"
+                    hx-encoding="multipart/form-data"
+                    hx-swap="outerHTML"
+                    hx-on:click="removeElementById('#user-edit-modal')"
+                >
+                    SUBMIT
+                </button>
+            </div>
+        {{ else }}
+            <div class="login-form-card-submit">
+                <button 
+                    class="login-form-card-submit-button" 
+                    type="submit"
+                    hx-post="/"
+                    hx-target="#login-wrapper"
+                    hx-encoding="multipart/form-data"
+                    hx-swap="outerHTML"
+                >
+                    SUBMIT
+                </button>
+            </div>
+        {{ end }}
     </form>
     <script>
-        window.addEventListener("load", function() {
-            try{
-                const avatar = htmx.find('#login-form-card-avatar')
-                const avatarDelete = htmx.find('#login-form-card-avatar-delete')
-                avatar.addEventListener("mouseover", function() {
-                    const avatarInput = htmx.find('#avatar-input')
-                    if (avatarInput.value == "") { return } 
-                    avatarDelete.classList.add("visible")
-                })
-                avatar.addEventListener("mouseout", function() {
-                    avatarDelete.classList.remove("visible")
-                })
-                avatar.addEventListener("click", function() {
-                    const image = htmx.find('#avatar-image')
-                    const avatarInput = htmx.find('#avatar-input')
-                    image.src = '/static/images/avatar_placeholder.png'
-                    avatarInput.value = ""
-                })
-            }catch{}
-        })
-
-        function uploadTemporaryAvatar(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-        
-                reader.onload = function (e) {
-                    const image = htmx.find('#avatar-image')
-                    image.src = e.target.result
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
+        // window.addEventListener("load", function(event) {
+        //     console.log('load event')
+        //     console.log(event.detail.elt)
+        //     try{
+        //         const avatar = htmx.find('#login-form-card-avatar')
+        //         const avatarDelete = htmx.find('#login-form-card-avatar-delete')
+        //         avatar.addEventListener("mouseover", function() {
+        //             const avatarInput = htmx.find('#avatar-input')
+        //             if (avatarInput.value == "") { return } 
+        //             avatarDelete.classList.add("visible")
+        //         })
+        //         avatar.addEventListener("mouseout", function() {
+        //             avatarDelete.classList.remove("visible")
+        //         })
+        //         avatar.addEventListener("click", function() {
+        //             const image = htmx.find('#avatar-image')
+        //             const avatarInput = htmx.find('#avatar-input')
+        //             image.src = '/static/images/avatar_placeholder.png'
+        //             avatarInput.value = ""
+        //         })
+        //     }catch{}
+        // })
     </script>
 {{ end }}

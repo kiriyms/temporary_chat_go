@@ -60,3 +60,15 @@ func (mh *MockHandler) HandleGetWebSocketChat(c echo.Context) error {
 func (mh *MockHandler) HandlePostJoinRoom(c echo.Context) error {
 	return nil
 }
+
+func (mh *MockHandler) HandleDeleteLeaveRoom(c echo.Context) error {
+	return nil
+}
+
+func (mh *MockHandler) HandleGetUserEditModal(c echo.Context) error {
+	return nil
+}
+
+func (mh *MockHandler) HandlePostUserEdit(c echo.Context) error {
+	return nil
+}

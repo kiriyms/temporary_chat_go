@@ -1,0 +1,17 @@
+{{ block "user-info" . }}
+    <div id="user-info" class="user-info">
+        <div class="user-info-wrapper">
+            <img class="user-info-avatar" src="{{ .AvatarPath }}" alt="avatar">
+            <div class="user-info-name">
+                {{ .Name }}
+            </div>
+        </div>
+        <button 
+            class="user-info-settings"
+            hx-get="/edit"
+            hx-target="#modal-wrapper"
+        >
+            <img class="user-info-settings-icon" src="/static/images/settings_icon.svg" alt="settings">
+        </button>
+    </div>
+{{ end }}

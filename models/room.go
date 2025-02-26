@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+	"log"
 	"slices"
 	"sync"
 	"time"
@@ -25,7 +27,7 @@ func NewRoom(creatorId uuid.UUID, h *Hub, n string, c string) *Room {
 		Hub:        h,
 		Name:       n,
 		Code:       c,
-		ExpireTime: time.Now().Add(30 * time.Second),
+		ExpireTime: time.Now().Add(60 * time.Second),
 	}
 	room.Users = append(room.Users, creatorId)
 
@@ -123,6 +125,36 @@ func (rl *RoomList) AddUserToRoom(rId, uId uuid.UUID) error {
 	defer rl.mu.Unlock()
 
 	rl.rooms[rId].Users = append(rl.rooms[rId].Users, uId)
+	return nil
+}
+
+func (rl *RoomList) RemoveUserFromRoom(rId, uId uuid.UUID) error {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	room := rl.rooms[rId]
+	if room == nil {
+		return fmt.Errorf("room with id %v not found", rId)
+	}
+
+	index := -1
+	for k, v := range room.Users {
+		if uId == v {
+			index = k
+		}
+	}
+
+	if index == -1 {
+		return fmt.Errorf("room with id %v does not contain user %v", rId, uId)
+	}
+
+	log.Printf("%v", room.Users)
+
+	room.Users[index] = room.Users[len(room.Users)-1]
+	room.Users = room.Users[:len(room.Users)-1]
+
+	log.Printf("%v", room.Users)
+
 	return nil
 }
 

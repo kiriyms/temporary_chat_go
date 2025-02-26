@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -37,11 +39,11 @@ func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
 	user := ph.UserList.GetUserById(userUUID)
 	if user == nil {
 		log.Printf("[ERROR]: user not found although token is valid")
-		notificationData := models.Notification{
-			IsError: true,
-			Content: "user not found although token is valid",
-		}
-		c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
+		// notificationData := models.Notification{
+		// 	IsError: true,
+		// 	Content: "user not found although token is valid",
+		// }
+		// c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
 		return c.Render(http.StatusOK, "index", data)
 	}
 
@@ -68,6 +70,9 @@ func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
 
 func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 	userName := c.FormValue("name-input")
+	if userName == "" {
+		userName = "Anonymous"
+	}
 
 	file, err := c.FormFile("avatar-input")
 	fileName := "static/images/avatar_placeholder.png"
@@ -87,6 +92,8 @@ func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 		log.Printf("[ERROR]: created user was not found in UserList")
 		return c.String(http.StatusInternalServerError, "User was not found!")
 	}
+	resetChan := utils.NewUserTimer(ph.UserList, newUser.Id)
+	newUser.ResetTimer = resetChan
 
 	token, err := utils.CreateJWT(newUser.Id)
 	if err != nil {
@@ -97,6 +104,7 @@ func (ph *ProductionHandler) HandlePostProfile(c echo.Context) error {
 	jwtCookie := new(http.Cookie)
 	jwtCookie.Name = "jwt"
 	jwtCookie.Value = token
+	jwtCookie.Path = "/"
 	c.SetCookie(jwtCookie)
 
 	userRooms := ph.RoomList.GetUserRooms(user.Id)
@@ -184,7 +192,15 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	jwtCookie := new(http.Cookie)
 	jwtCookie.Name = "jwt"
 	jwtCookie.Value = token
+	jwtCookie.Path = "/"
 	c.SetCookie(jwtCookie)
+
+	user := ph.UserList.GetUserById(userUUID)
+	if user == nil {
+		log.Printf("[ERROR]: user with id %v not found in userList", userUUID)
+		return c.String(http.StatusInternalServerError, "User not found")
+	}
+	user.ResetTimer <- true
 
 	dataCounter := struct {
 		CurrentRooms int
@@ -201,7 +217,7 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 			Name string
 		}
 	}{
-		TimerSeconds: 30,
+		TimerSeconds: 60,
 		Room: struct {
 			Id   uuid.UUID
 			Name string
@@ -235,6 +251,11 @@ func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
 		log.Printf("[ERROR]: GET websocket unauthorized request. ErrMsg: %v", err)
+		notificationData := models.Notification{
+			IsError: true,
+			Content: "session token no longer valid",
+		}
+		c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 
@@ -292,6 +313,11 @@ func (ph *ProductionHandler) HandleGetRoom(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
 		log.Printf("[ERROR]: GET room unauthorized request. ErrMsg: %v", err)
+		notificationData := models.Notification{
+			IsError: true,
+			Content: "session token no longer valid",
+		}
+		c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 
@@ -324,15 +350,40 @@ func (ph *ProductionHandler) HandleGetRoom(c echo.Context) error {
 		c.Render(http.StatusOK, "room-card-inactive-oob", roomData)
 	}
 
+	roomUsers := ph.RoomList.GetRoomUsers(roomUUID)
+	roomUsersInfo := make([]struct {
+		Id         uuid.UUID
+		Name       string
+		AvatarPath string
+	}, 0)
+	for _, user := range roomUsers {
+		userInfo := ph.UserList.GetUserById(user)
+		roomUsersInfo = append(roomUsersInfo, struct {
+			Id         uuid.UUID
+			Name       string
+			AvatarPath string
+		}{
+			Id:         userInfo.Id,
+			Name:       userInfo.Name,
+			AvatarPath: userInfo.AvatarPath,
+		})
+	}
+	log.Printf("[INFO]: room users: %v", roomUsersInfo)
 	room := ph.RoomList.GetRoomById(roomUUID)
 	data := struct {
-		Id   uuid.UUID
-		Name string
-		Code string
+		Id        uuid.UUID
+		Name      string
+		Code      string
+		RoomUsers []struct {
+			Id         uuid.UUID
+			Name       string
+			AvatarPath string
+		}
 	}{
-		Id:   room.Id,
-		Name: room.Name,
-		Code: room.Code,
+		Id:        room.Id,
+		Name:      room.Name,
+		Code:      room.Code,
+		RoomUsers: roomUsersInfo,
 	}
 
 	log.Printf("[INFO]: sent room data"+
@@ -350,6 +401,11 @@ func (ph *ProductionHandler) HandleGetWebSocketChat(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
 		log.Printf("[ERROR]: GET websocket chat unauthorized request. ErrMsg: %v", err)
+		notificationData := models.Notification{
+			IsError: true,
+			Content: "session token no longer valid",
+		}
+		c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 
@@ -406,6 +462,11 @@ func (ph *ProductionHandler) HandlePostJoinRoom(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
 		log.Printf("[ERROR]: POST join unauthorized request. ErrMsg: %v", err)
+		notificationData := models.Notification{
+			IsError: true,
+			Content: "session token no longer valid",
+		}
+		c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 
@@ -452,8 +513,16 @@ func (ph *ProductionHandler) HandlePostJoinRoom(c echo.Context) error {
 	jwtCookie := new(http.Cookie)
 	jwtCookie.Name = "jwt"
 	jwtCookie.Value = token
+	jwtCookie.Path = "/"
 	c.SetCookie(jwtCookie)
 
+	user := ph.UserList.GetUserById(userUUID)
+	if user == nil {
+		log.Printf("[ERROR]: user with id %v not found in userList", userUUID)
+		return c.String(http.StatusInternalServerError, "User not found")
+	}
+
+	user.ResetTimer <- true
 	dataCounter := struct {
 		CurrentRooms int
 		MaxRooms     int
@@ -496,4 +565,116 @@ func (ph *ProductionHandler) HandlePostJoinRoom(c echo.Context) error {
 	c.Render(http.StatusOK, "room-list-join-room-input-oob", nil)
 	c.Render(http.StatusOK, "room-list-counter-oob", dataCounter)
 	return c.Render(http.StatusOK, "room-card", data)
+}
+
+// FIX "return err" to return c.Render with proper http status codes
+func (ph *ProductionHandler) HandleDeleteLeaveRoom(c echo.Context) error {
+	userUUID, err := utils.GetAndValidateCookieJWT(c)
+	if err != nil {
+		log.Printf("[ERROR]: GET room unauthorized request. ErrMsg: %v", err)
+		notificationData := models.Notification{
+			IsError: true,
+			Content: "session token no longer valid",
+		}
+		c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
+		return c.Render(http.StatusUnauthorized, "login-oob", nil)
+	}
+
+	roomIdParam := c.Param("roomId")
+	roomUUID, err := uuid.Parse(roomIdParam)
+	if err != nil {
+		log.Printf("[ERROR]: provided room id parameter '%v' could not be parsed into UUID. ErrMsg: %v", roomIdParam, err)
+		return c.String(http.StatusInternalServerError, "Provided room id parameter could not be parsed into UUID")
+	}
+
+	err = ph.RoomList.RemoveUserFromRoom(roomUUID, userUUID)
+	if err != nil {
+		log.Printf("[ERROR]: %v", err)
+		return c.String(http.StatusInternalServerError, "Error removing user from room")
+	}
+
+	return nil
+}
+
+func (ph *ProductionHandler) HandleGetUserEditModal(c echo.Context) error {
+	userUUID, err := utils.GetAndValidateCookieJWT(c)
+	if err != nil {
+		log.Printf("[ERROR]: GET edit modal unauthorized request. ErrMsg: %v", err)
+		notificationData := models.Notification{
+			IsError: true,
+			Content: "session token no longer valid",
+		}
+		c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
+		return c.Render(http.StatusUnauthorized, "login-oob", nil)
+	}
+
+	user := ph.UserList.GetUserById(userUUID)
+	if user == nil {
+		log.Printf("[ERROR]: user with id %v not found in userList", userUUID)
+		return c.String(http.StatusInternalServerError, "User not found")
+	}
+
+	data := struct {
+		EditModal  bool
+		Name       string
+		AvatarPath string
+	}{
+		EditModal:  true,
+		Name:       user.Name,
+		AvatarPath: user.AvatarPath,
+	}
+
+	return c.Render(http.StatusOK, "user-edit-modal", data)
+}
+
+func (ph *ProductionHandler) HandlePostUserEdit(c echo.Context) error {
+	userUUID, err := utils.GetAndValidateCookieJWT(c)
+	if err != nil {
+		log.Printf("[ERROR]: GET edit modal unauthorized request. ErrMsg: %v", err)
+		notificationData := models.Notification{
+			IsError: true,
+			Content: "session token no longer valid",
+		}
+		c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
+		return c.Render(http.StatusUnauthorized, "login-oob", nil)
+	}
+
+	userName := c.FormValue("name-input")
+	if userName == "" {
+		userName = "Anonymous"
+	}
+
+	file, err := c.FormFile("avatar-input")
+	fileName := "static/images/avatar_placeholder.png"
+	if err == nil {
+		fileName, err = utils.UploadFile(file)
+		if err != nil {
+			log.Printf("[ERROR]: error with file upload. ErrMsg: %v", err)
+			return c.String(http.StatusInternalServerError, "Error with file upload: "+err.Error())
+		}
+	}
+
+	oldUser := ph.UserList.GetUserById(userUUID)
+	err = os.Remove(fmt.Sprintf("%v", oldUser.AvatarPath))
+	if err != nil {
+		log.Printf("[ERROR]: could not remove image %v. ErrMsg: %v", oldUser.AvatarPath, err)
+	}
+
+	user := ph.UserList.EditUser(userUUID, userName, fileName)
+	data := struct {
+		Name       string
+		AvatarPath string
+	}{
+		Name:       user.Name,
+		AvatarPath: user.AvatarPath,
+	}
+
+	log.Printf("[INFO]: Changed username to %v and avatarpath to %v for user: %v", user.Name, user.AvatarPath, user.Id)
+	notificationData := models.Notification{
+		IsInfo:  true,
+		Content: "username and/or avatar edited",
+	}
+	c.Render(http.StatusOK, "notification", notificationData)
+	// send update to all rooms
+	return c.Render(http.StatusOK, "user-info", data)
 }

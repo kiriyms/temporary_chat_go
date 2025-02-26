@@ -16,10 +16,17 @@
 .chat-window-active-wrapper {
     width: 100%;
     height: 100%;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.chat-window-active-wrapper-inner {
     position: relative;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    width: 100%;
 }
 
 .chat-window-active-top {
@@ -37,10 +44,9 @@
 }
 
 .chat-window-active-room-link {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     color: rgb(25, 25, 25);
     padding: 8px;
-    font-weight: bold;
     display: flex;
     justify-content: center;
 }
@@ -90,4 +96,28 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+}
+
+.chat-window-active-room-users {
+    min-width: 250px;
+    position: relative;
+}
+
+.chat-window-active-room-users-top {
+    padding: 7px 5px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.chat-window-active-room-users-list {
+    top: 3rem;
+    max-height: 83.5%;
+    padding: 7px;
+}
+
+.chat-window-active-user-info {
+    font-size: 1.25rem;
+    align-items: center;
+    display: flex;
+    gap: 6px;
 }
