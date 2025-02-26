@@ -93,18 +93,15 @@ func (h *Hub) Start() {
 			// This loop is for notifications
 			// Target: room-card and it's notification bubble component
 			for client := range h.clients {
-				// Also make notificationByteTemplate to send to notification clients
 				var err error = nil
 				var byteTemplate []byte
 				byteTemplate, err = GetTemplateBytes("room-card-notification", notificationData)
-				// log.Printf("%v", string(byteTemplate))
 				if err != nil {
 					log.Printf("HUB: failed to convert broadcasted message to bytes: %v", err)
 					byteTemplate = []byte(msg.Content)
 				}
 
 				select {
-				// Replace []byte(msg.Content) with notificationByteTemplate
 				case client.Send <- byteTemplate:
 				default:
 					log.Printf("HUB: client unresponsive. Closing client %v", client.Id)
@@ -116,7 +113,6 @@ func (h *Hub) Start() {
 			// This loop is for actual formatted chat messages
 			// Target: chat-window
 			for client := range h.clientChats {
-				// Also make notificationByteTemplate to send to notification clients
 				var err error = nil
 				var byteTemplate []byte
 				if client.Id == msg.Id {
@@ -124,7 +120,6 @@ func (h *Hub) Start() {
 				} else {
 					byteTemplate, err = GetTemplateBytes("message-card-other", data)
 				}
-				// log.Printf("%v", string(byteTemplate))
 				if err != nil {
 					log.Printf("HUB: failed to convert broadcasted message to bytes: %v", err)
 					byteTemplate = []byte(msg.Content)
@@ -147,11 +142,9 @@ func (h *Hub) Start() {
 			h.clients[client] = true
 			h.mu.Unlock()
 
-			// Change to notification template
 			log.Printf("HUB: sending message history from hub %v to client %v", h.Id, client.Id)
 			for _, msg := range h.Messages {
 				byteTemplate, err := GetTemplateBytes("message-card", msg)
-				// log.Printf("%v", string(byteTemplate))
 				if err != nil {
 					client.Send <- []byte(msg.Content)
 					continue
@@ -255,7 +248,6 @@ func (h *Hub) Start() {
 				} else {
 					byteTemplate, err = GetTemplateBytes("message-card-other", data)
 				}
-				// log.Printf("%v", string(byteTemplate))
 				if err != nil {
 					log.Printf("HUB: failed to convert broadcasted message to bytes: %v", err)
 					client.Send <- []byte(msg.Content)
@@ -298,18 +290,18 @@ func GetTemplateBytes(name string, data interface{}) ([]byte, error) {
 	t := template.New("")
 	_, err := t.ParseGlob("views/*.html")
 	if err != nil {
-		log.Printf("error parsing blob for template bytes: %v", err)
+		log.Printf("[ERROR]: error parsing blob for template bytes: %v", err)
 		return nil, err
 	}
 	_, err = t.ParseGlob("views/components/*.html")
 	if err != nil {
-		log.Printf("error parsing blob for template bytes: %v", err)
+		log.Printf("[ERROR]: error parsing blob for template bytes: %v", err)
 		return nil, err
 	}
 
 	tmpl := t.Lookup(name)
 	if tmpl == nil {
-		err := errors.New("error parsing template for bytes: template with given name not found")
+		err := errors.New("[ERROR]: error parsing template for bytes: template with given name not found")
 		log.Printf("%v", err)
 		return nil, err
 	}
@@ -317,7 +309,7 @@ func GetTemplateBytes(name string, data interface{}) ([]byte, error) {
 	var renderedMessage bytes.Buffer
 	err = tmpl.Execute(&renderedMessage, data)
 	if err != nil {
-		log.Printf("error executing template for bytes: %v", err)
+		log.Printf("[ERROR]: error executing template for bytes: %v", err)
 		return nil, err
 	}
 

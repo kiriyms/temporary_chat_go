@@ -9,7 +9,7 @@ import (
 )
 
 func NewRoomTimer(rl *models.RoomList, rId uuid.UUID) {
-	timer := time.NewTimer(60 * time.Second)
+	timer := time.NewTimer(180 * time.Second)
 
 	log.Printf("TIMER: starting room %v timer", rId)
 	go func() {

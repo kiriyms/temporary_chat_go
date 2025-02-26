@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"log"
 	"slices"
 	"sync"
 	"time"
@@ -148,12 +147,8 @@ func (rl *RoomList) RemoveUserFromRoom(rId, uId uuid.UUID) error {
 		return fmt.Errorf("room with id %v does not contain user %v", rId, uId)
 	}
 
-	log.Printf("%v", room.Users)
-
 	room.Users[index] = room.Users[len(room.Users)-1]
 	room.Users = room.Users[:len(room.Users)-1]
-
-	log.Printf("%v", room.Users)
 
 	return nil
 }

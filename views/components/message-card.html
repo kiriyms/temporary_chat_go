@@ -1,5 +1,5 @@
 {{ block "message-card" . }}
-    <div hx-swap-oob="beforeend:#chat-window-active-messages" hx-on::load="console.log(this)" >
+    <div hx-swap-oob="beforeend:#chat-window-active-messages">
         <li class="message-card">
             <div class="message-card-timecode">
                 {{ .TimeCode }}

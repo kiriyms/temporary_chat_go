@@ -33,7 +33,6 @@ func main() {
 	userList := models.NewUserList()
 	roomList := models.NewRoomList()
 	var h handlers.Handler = handlers.NewProductionHandler(userList, roomList)
-	// h := handlers.NewMockHandler()
 
 	e.GET("/", h.HandleGetMain)
 	e.POST("/", h.HandlePostProfile)

@@ -39,11 +39,6 @@ func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
 	user := ph.UserList.GetUserById(userUUID)
 	if user == nil {
 		log.Printf("[ERROR]: user not found although token is valid")
-		// notificationData := models.Notification{
-		// 	IsError: true,
-		// 	Content: "user not found although token is valid",
-		// }
-		// c.Render(http.StatusUnprocessableEntity, "notification", notificationData)
 		return c.Render(http.StatusOK, "index", data)
 	}
 
@@ -55,8 +50,6 @@ func (ph *ProductionHandler) HandleGetMain(c echo.Context) error {
 			Room:         *room,
 			TimerSeconds: int(time.Until(room.ExpireTime).Seconds()),
 		})
-
-		log.Printf("TIMER SECOND IN HANDLEGETMAIN: %v", int(time.Until(room.ExpireTime).Seconds()))
 	}
 
 	data.Rooms = true
@@ -217,7 +210,7 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 			Name string
 		}
 	}{
-		TimerSeconds: 60,
+		TimerSeconds: 180,
 		Room: struct {
 			Id   uuid.UUID
 			Name string
@@ -246,7 +239,6 @@ func (ph *ProductionHandler) HandlePostRoom(c echo.Context) error {
 	return c.Render(http.StatusOK, "room-card", data)
 }
 
-// FIX "return err" to return c.Render with proper http status codes
 func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
@@ -259,7 +251,6 @@ func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 
-	// userRooms := ph.RoomList.GetUserRooms(userUUID)
 	roomIdParam := c.Param("roomId")
 	roomUUID, err := uuid.Parse(roomIdParam)
 	if err != nil {
@@ -308,7 +299,6 @@ func (ph *ProductionHandler) HandleGetWebSocket(c echo.Context) error {
 	return nil
 }
 
-// FIX "return err" to return c.Render with proper http status codes
 func (ph *ProductionHandler) HandleGetRoom(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
@@ -409,7 +399,6 @@ func (ph *ProductionHandler) HandleGetWebSocketChat(c echo.Context) error {
 		return c.Render(http.StatusUnauthorized, "login-oob", nil)
 	}
 
-	// userRooms := ph.RoomList.GetUserRooms(userUUID)
 	roomIdParam := c.Param("roomId")
 	roomUUID, err := uuid.Parse(roomIdParam)
 	if err != nil {
@@ -567,7 +556,6 @@ func (ph *ProductionHandler) HandlePostJoinRoom(c echo.Context) error {
 	return c.Render(http.StatusOK, "room-card", data)
 }
 
-// FIX "return err" to return c.Render with proper http status codes
 func (ph *ProductionHandler) HandleDeleteLeaveRoom(c echo.Context) error {
 	userUUID, err := utils.GetAndValidateCookieJWT(c)
 	if err != nil {
@@ -675,6 +663,5 @@ func (ph *ProductionHandler) HandlePostUserEdit(c echo.Context) error {
 		Content: "username and/or avatar edited",
 	}
 	c.Render(http.StatusOK, "notification", notificationData)
-	// send update to all rooms
 	return c.Render(http.StatusOK, "user-info", data)
 }

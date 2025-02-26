@@ -12,7 +12,7 @@ import (
 
 func NewUserTimer(ul *models.UserList, uId uuid.UUID) chan (bool) {
 	resetChan := make(chan (bool))
-	timer := time.NewTimer(15 * time.Second)
+	timer := time.NewTimer(210 * time.Second)
 
 	log.Printf("TIMER: starting user %v timer", uId)
 	go func() {
@@ -33,7 +33,7 @@ func NewUserTimer(ul *models.UserList, uId uuid.UUID) chan (bool) {
 				return
 			case <-resetChan:
 				log.Printf("TIMER: user %v timer resetting", uId)
-				timer.Reset(15 * time.Second)
+				timer.Reset(210 * time.Second)
 			}
 		}
 	}()
