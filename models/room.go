@@ -26,7 +26,7 @@ func NewRoom(creatorId uuid.UUID, h *Hub, n string, c string) *Room {
 		Hub:        h,
 		Name:       n,
 		Code:       c,
-		ExpireTime: time.Now().Add(60 * time.Second),
+		ExpireTime: time.Now().Add(180 * time.Second),
 	}
 	room.Users = append(room.Users, creatorId)
 

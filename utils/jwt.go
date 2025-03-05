@@ -14,7 +14,7 @@ func CreateJWT(uId uuid.UUID) (string, error) {
 	claims := models.JwtClaims{
 		UserId: uId.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(60 * time.Second)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(180 * time.Second)),
 		},
 	}
 
