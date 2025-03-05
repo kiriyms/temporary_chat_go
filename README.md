@@ -50,6 +50,7 @@ The application was done using the following technologies:
 |Backend API|Go ([Echo](https://echo.labstack.com) library)|
 |Frontend interface|HTML+CSS ([HTMX](https://htmx.org) library for handling server reponses)|
 |Session authorization and tracking|JWT and Cookies|
+|Deployment|Virtual machine with Nginx proxy|
 
 #### Techniques & paradigms
 - **HATEOAS**: this app does not have a separate web client. Most of the interactivity and all of the responses are sent as HTML packages directly to the browser.
