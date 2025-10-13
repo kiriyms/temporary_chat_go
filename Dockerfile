@@ -1,0 +1,46 @@
+# ---------- Stage 1: Build ----------
+FROM golang:1.25.1-alpine3.21 AS builder
+
+# Install CA certificates (needed if go mod downloads via HTTPS)
+RUN apk add --no-cache ca-certificates git
+
+# Set working directory
+WORKDIR /app
+
+# Copy go.mod and go.sum first for dependency caching
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Optional: print its value to verify during build
+RUN echo "Building with GIT_SHA=$GIT_SHA"
+
+# Build static binary (disable cgo)
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -o server ./cmd
+
+# ---------- Stage 2: Runtime ----------
+FROM alpine:3.21
+
+# Add CA certificates for HTTPS
+RUN apk add --no-cache ca-certificates
+
+# Create a non-root user for security
+RUN addgroup -S app && adduser -S app -G app
+USER app
+
+# Set working directory
+WORKDIR /app
+
+# Copy built binary from builder
+COPY --from=builder /app/server .
+
+# Expose the port the server listens on
+EXPOSE 8080
+
+# Run the binary
+ENTRYPOINT ["./server"]
