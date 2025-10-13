@@ -39,8 +39,13 @@ WORKDIR /app
 # Copy built binary from builder
 COPY --from=builder /app/server .
 
+# Copy necessary files
+COPY .env .
+COPY ./views ./views
+COPY ./static ./static
+
 # Expose the port the server listens on
-EXPOSE 8080
+EXPOSE 1323
 
 # Run the binary
 ENTRYPOINT ["./server"]
