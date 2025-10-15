@@ -40,7 +40,6 @@ WORKDIR /app
 COPY --from=builder /app/server .
 
 # Copy necessary files
-COPY .env .
 COPY ./views ./views
 COPY ./static ./static
 

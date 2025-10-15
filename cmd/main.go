@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"strings"
 
 	"github.com/Kirill-Sirotkin/temporary_chat_go/handlers"
@@ -15,7 +16,11 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("Error loading .env file, will look in environment variables")
+	}
+
+	if _, ok := os.LookupEnv("JWT_SECRET"); !ok {
+		log.Fatal("JWT_SECRET is not set in environment variables")
 	}
 
 	e := echo.New()
