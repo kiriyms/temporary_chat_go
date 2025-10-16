@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"log"
 	"sync"
-	"text/template"
 
 	"github.com/google/uuid"
 )
