@@ -21,8 +21,7 @@ Made in Go + HTMX.
 
 ##### **Demo**
 
-Demo not available at the moment
-~~It is possible to demo the app at http://164.90.179.107:8080~~
+It is possible to demo the app at http://65.108.156.197:8081
 
 The demo is hosted via a droplet on DigitalOcean.
 
@@ -70,9 +69,3 @@ The application was done using the following technologies:
 - The HATEOAS does not easily support client-side interactivity, however, I wanted to try out setting up some simple interactive animations. To achieve that, I used HTMX lifecycle events to act on the server responses and hook up Javascript functions in the browser that provided some limited intercativity.
 - By utilizing Go+HTMX stack, and Cookies to transfer JWT, I learned more about the structure of HTTP requests and responses in relation to headers, content-types, request/response bodies and other elements.
 - Uploaded avatar pictures need to persist for the duration of the user session. However, as the user itself does not persist, there is no reason to keep the uploaded avatar on server disk storage. As a result, I set up a timer system to delete the image after the session is over.
-
-#### Known issues
-
-> At the moment, messages that are sent in chat by users are not filtered, which allows for XSS (Cross Site Scripting) attacks.
-
-If you'd like to try out the app, please make sure you only join rooms of your trusted friends, or simulate different users by opening several incognito browser tabs (such that the browser does not share the local Cookie storage)
