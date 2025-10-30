@@ -59,13 +59,9 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
             IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/tempochat:latest
+            cd ${{ secrets.DEPLOY_PATH }}
             echo "${{ secrets.ENV_FILE }}" | tr -d '\r' > .env
-            docker pull $IMAGE
-            docker stop tempochat || true
-            docker rm tempochat || true
-            docker run -d \
-              --name tempochat \
-              --env-file .env \
-              -p 8081:1323 \
-              $IMAGE
+            docker compose -f docker-compose.${{ secrets.SERVICE_NAME }}.yml pull
+            docker compose -f docker-compose.${{ secrets.SERVICE_NAME }}.yml up -d
+            docker system prune -f
             rm .env
